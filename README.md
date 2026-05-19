@@ -58,6 +58,15 @@ devtools::install_github("changlabs/MicroBiotR")
 packageVersion("MicroBiotR")
 ```
 
+## Dataset
+```markdown
+The multi-omics dataset (including mMFC, 16S rRNA Amplicon-seq, and Bulk RNA-seq data) and matched metadata used in this study are publicly available on Zenodo:
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20286378.svg)](https://doi.org/10.5281/zenodo.20286378)
+
+You can access and download the data directly via [https://doi.org/10.5281/zenodo.20286378](https://doi.org/10.5281/zenodo.20286378).
+```
+
 ## SOM analysis
 ```markdown
 # load libraries
@@ -69,7 +78,10 @@ library(tidyverse)
 
 # load matadata
 meta<-read.delim('meta.txt',header = T, row.names = 1)
+
 # SOM analysis
+load(file.path("data_gated.save"))
+set.seed(2025)
 MBR_som(fl_data_ig)
 ```
 
@@ -358,7 +370,7 @@ MBR_ml(
 # Pre-processing
 # Load metadata and feature abundance table
 meta_rna <- read.delim(
-  '/meta.txt',
+  '/meta_rna.txt',
   header = TRUE,
   row.names = 1
 )
