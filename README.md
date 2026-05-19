@@ -59,11 +59,9 @@ packageVersion("MicroBiotR")
 ```
 
 ## Dataset
-The multi-omics dataset (including mMFC, 16S rRNA Amplicon-seq, and Bulk RNA-seq data) and matched metadata used in this study are publicly available on Zenodo:
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20286378.svg)](https://doi.org/10.5281/zenodo.20286378)
+The multi-omics dataset (including mMFC, 16S rRNA Amplicon-seq, and Bulk RNA-seq data) and matched metadata used in this study are publicly available on [Zenodo](https://doi.org/10.5281/zenodo.20286378).
 
-You can access and download the data directly via [https://doi.org/10.5281/zenodo.20286378](https://doi.org/10.5281/zenodo.20286378).
 
 ## SOM analysis
 ```markdown
