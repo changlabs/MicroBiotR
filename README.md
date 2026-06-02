@@ -214,7 +214,7 @@ MBR_reclustering(data = cohonen_information, num_clusters = 1000)
 ## Flow cytometry dotplot
 ```markdown
 # Define the directory containing 'FCS files generated from SOM processing'
-rawdata_path <- "/MappedFCS"
+rawdata_path <- "MappedFCS"
 
 fcs_files <- MBR_read(rawdata_path)
 
@@ -297,12 +297,12 @@ MBR_save(
 # Pre-processing
 # Load metadata and feature abundance table
 meta_16s <- read.delim(
-  '/bac_meta.txt',
+  'bac_meta.txt',
   header = TRUE,
   row.names = 1
 )
 count_table_16s <- read.delim(
-  '/bac_data.txt',
+  'bac_data.txt',
   header = TRUE,
   row.names = 1
 )
@@ -366,12 +366,12 @@ MBR_ml(
 # Pre-processing
 # Load metadata and feature abundance table
 meta_rna <- read.delim(
-  '/meta_rna.txt',
+  'meta_rna.txt',
   header = TRUE,
   row.names = 1
 )
 count_table_rna <- read_csv(
-  '/rnaibd.csv'
+  'rnaibd.csv'
 )
 
 # Remove genes/features with zero counts across all samples while retaining the gene identifier column (`Symbol`)
