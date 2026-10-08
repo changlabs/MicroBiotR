@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_mantel}
 \alias{MBR_mantel}
-\title{Mantel Test Visualization for Metadata and Data Correlations}
+\title{Visualize Mantel associations and feature correlations}
 \usage{
 MBR_mantel(
   data = NULL,
@@ -25,8 +25,7 @@ MBR_mantel(
 
 \item{demographic_cols}{Character vector of column names in meta_data for demographic variables.}
 
-\item{spec_select_names}{Named list defining labels for clinical and demographic variable groups
-(default list with A = "A", B = "B").}
+\item{spec_select_names}{Named list defining labels for clinical and demographic variable groups (default list with A = "A", B = "B").}
 
 \item{colors}{Color palette for the Pearson correlation heatmap (default RdBu palette with 11 colors).}
 
@@ -36,8 +35,36 @@ MBR_mantel(
 
 \item{height}{Height of output PDF in inches (default 8).}
 }
+\value{
+Invisible NULL; the association figure is saved and printed.
+}
 \description{
-Performs Mantel tests between metadata subsets (clinical and demographic variables) and
-data features, then visualizes correlation and Mantel test results using a correlation plot
-enhanced with Mantel's r and p-values.
+Compares distance patterns of metadata blocks with feature data using linkET and overlays associations on a feature correlation heatmap.
+}
+\details{
+Samples must occupy matching rows of numeric data and metadata. clinical_cols and demographic_cols select metadata variable blocks; spec_select_names$A and $B supply their display names. NULL labels omit a block. Only appropriate numeric variables should enter distance calculations; arbitrary numeric encoding of categories gives arbitrary distances.
+
+A Mantel statistic correlates entries of two sample-distance matrices and uses permutations for significance. Distances and permutation settings are delegated to linkET::mantel_test defaults, not specified by this wrapper; consult the installed linkET help to identify them. Unequal units across metadata variables can dominate distance, so consider scaling a copy of metadata before use. Permutations assume exchangeable samples, and no blocked design or confounder adjustment is exposed. This is an association analysis, not evidence of causality.
+
+correlate(data) supplies the heatmap correlations (Pearson by the dependency default). Links bin Mantel r at 0.2 and 0.4 and p at 0.01 and 0.05; cut uses right-closed intervals, so boundary values enter the lower interval even though labels use less-than signs. Negative r values share the first category. The code specifies no multiple-testing adjustment. Writes mantel.pdf to an existing directory, prints the plot, and does not return the Mantel table.
+}
+\examples{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+# Include a strongly associated feature pair so the significance layer is exercised.
+data$v2 <- data$v1 + seq_len(nrow(data)) * 1e-6
+data <- data / rowSums(data)
+clinical <- data.frame(age = seq_len(20), marker = runif(20), BMI = rnorm(20, 25, 2))
+MBR_mantel(data, clinical, clinical_cols = c("age", "marker"),
+           demographic_cols = "BMI", out_path = out)
+stopifnot(file.exists(file.path(out, "mantel.pdf")))
+
+}
+\references{
+\url{https://github.com/Hy4m/linkET/blob/master/R/mantel-test.R}
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_beta}
 \alias{MBR_beta}
-\title{Beta Diversity Analysis with PCoA and Statistical Testing}
+\title{Ordinate Bray-Curtis dissimilarity and test group differences}
 \usage{
 MBR_beta(
   data,
@@ -32,8 +32,35 @@ MBR_beta(
 
 \item{height}{Height of output plot in inches (default: 5).}
 }
+\value{
+The combined patchwork plot, returned visibly.
+}
 \description{
-This function computes beta diversity (Bray-Curtis distance) on the provided data,
-performs Principal Coordinates Analysis (PCoA), conducts group-wise statistical testing (e.g., PERMANOVA),
-and generates visualizations including PCoA scatter plots and boxplots of principal coordinates.
+Calculates Bray-Curtis dissimilarities, a principal coordinates display, and a PERMANOVA group test with coordinate-wise comparison plots.
+}
+\details{
+Rows are samples and columns are nonnegative features. Metadata must be row-aligned. For samples i and j, Bray-Curtis is sum(abs(x_i - x_j)) / sum(x_i + x_j); it emphasizes abundance differences and ignores joint absences. Empty samples and missing values need to be handled before calling. Raw counts retain library-size effects; this function does not normalize input.
+
+Classical multidimensional scaling via cmdscale requests three axes and displays the first two. Use sufficiently many distinct samples to obtain three positive axes (at least four samples). Bray-Curtis need not be Euclidean, so negative eigenvalues can occur. The displayed percentages divide each eigenvalue by the sum of ALL eigenvalues; they are not necessarily conventional fractions of positive inertia. No correction for negative eigenvalues is requested.
+
+adonis2 tests group-associated variation in the full distance matrix using dependency-default unrestricted permutations. Its R-squared summarizes the fraction of sums of squares attributed to group. Group dispersion differences can also affect the result; examine dispersion separately. Exchangeability is required, and this interface has no strata or covariate arguments. Set a seed for reproducible permutations.
+
+The test argument changes only comparisons of plotted coordinate scores, not PERMANOVA. wilcox and ttest compare group pairs; kruskal is called through pairwise plot comparisons; anova gives an omnibus axis comparison. Axis tests do not replace a multivariate test. The wrapper specifies no multiple-testing correction for these annotations. Ellipses are visualization summaries, not a PERMANOVA confidence region. Writes .group.txt, adonis.txt, and pcoa_<test>.pdf to an existing out_path.
+}
+\examples{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+p <- MBR_beta(data, out_path = out, meta_data = meta, group_name = "Group")
+stopifnot(inherits(p, "patchwork"), file.exists(file.path(out, "adonis.txt")))
+
+}
+\references{
+\url{https://vegandevs.github.io/vegan/reference/vegdist.html}
+\url{https://vegandevs.github.io/vegan/reference/adonis.html}
+\url{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cmdscale.html}
 }

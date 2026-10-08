@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_flow_plot}
 \alias{MBR_flow_plot}
-\title{Individual Flow Cytometry Plot}
+\title{Plot event density with optional cluster highlighting}
 \usage{
 MBR_flow_plot(
   dat,
@@ -24,29 +24,23 @@ MBR_flow_plot(
 \arguments{
 \item{dat}{A data frame processed with MBR_process, containing the flow cytometry data.}
 
-\item{bins}{A data frame processed with MBR_prepare, containing information about data bins,
-typically used for displaying cluster centroids. Defaults to `NULL`.}
+\item{bins}{A data frame processed with MBR_prepare, containing information about data bins, typically used for displaying cluster centroids. Defaults to `NULL`.}
 
 \item{x}{Character string, the name of the column in `dat` to be used for the x-axis.}
 
 \item{y}{Character string, the name of the column in `dat` to be used for the y-axis.}
 
-\item{selected_rows}{Character vector, names of clusters of interest to highlight.
-These should correspond to values in the 'classes' column of `dat`.
-Defaults to `NULL`.}
+\item{selected_rows}{Character vector, names of clusters of interest to highlight. These should correspond to values in the 'classes' column of `dat`. Defaults to `NULL`.}
 
-\item{x_limits}{Numeric vector of length 2, specifying the lower and upper limits for the x-axis.
-Defaults to `c(0.9, 11000)`.}
+\item{x_limits}{Numeric vector of length 2, specifying the lower and upper limits for the x-axis. Defaults to `c(0.9, 11000)`.}
 
-\item{y_limits}{Numeric vector of length 2, specifying the lower and upper limits for the y-axis.
-Defaults to `c(0.9, 11000)`.}
+\item{y_limits}{Numeric vector of length 2, specifying the lower and upper limits for the y-axis. Defaults to `c(0.9, 11000)`.}
 
 \item{hex_bins}{Integer, the number of bins to use for the hexagonal binning. Defaults to 100.}
 
 \item{point_color}{Character string, the color for highlighted points. Defaults to "grey20".}
 
-\item{point_alpha}{Numeric, the transparency level for highlighted points (0 = transparent, 1 = opaque).
-Defaults to 0.3.}
+\item{point_alpha}{Numeric, the transparency level for highlighted points (0 = transparent, 1 = opaque). Defaults to 0.3.}
 
 \item{point_size}{Numeric, the size of highlighted points. Defaults to 0.5.}
 
@@ -54,9 +48,27 @@ Defaults to 0.3.}
 
 \item{label_size}{Numeric, the size of bin labels. Defaults to 3.}
 
-\item{theme_family}{Character string, the font family for the plot theme. Defaults to "Times".}
+\item{theme_family}{Font family for the plot theme; default Helvetica.}
+}
+\value{
+A ggplot object that can be printed or saved with ggplot2::ggsave.
 }
 \description{
-Generates a single flow cytometry plot with options for hexagonal binning,
-log-scaled axes, highlighting specific clusters, and adding bin labels.
+Builds a two-channel hexagonal density plot with logarithmic axes, highlighted events, and optional prototype labels.
+}
+\details{
+dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Events outside scale limits are removed for plot calculations.
+
+Highlight matching uses paste0("V", dat$classes), requiring uppercase labels such as V1 in selected_rows. Other functions may use lowercase v abundance columns; these conventions are not interchangeable without conversion. bins must have x and y columns and exactly one correctly ordered row per label in selected_rows. No statistical test is performed. This returns a plot without saving or printing it.
+}
+\examples{
+\donttest{
+set.seed(42)
+dat <- data.frame(FSC = runif(100, 1, 1000), SSC = runif(100, 1, 1000),
+                  classes = rep(1:2, 50))
+p <- MBR_flow_plot(dat, x = "FSC", y = "SSC", selected_rows = "V1")
+stopifnot(inherits(p, "ggplot"))
+print(p)
+}
+
 }

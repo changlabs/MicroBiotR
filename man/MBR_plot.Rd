@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_plot}
 \alias{MBR_plot}
-\title{Plotting Function for Flow Cytometry Data}
+\title{Arrange multiple flow density plots}
 \usage{
 MBR_plot(
   dat,
@@ -29,9 +29,27 @@ MBR_plot(
 \item{nrow}{Integer, number of rows for arranging the plots in the grid. Defaults to 2.}
 
 \item{common_legend}{Logical, whether to use a common legend for all plots. Defaults to `TRUE`.}
+
+\item{...}{Additional arguments forwarded to every MBR_flow_plot call.}
+}
+\value{
+The arranged ggpubr plot object.
 }
 \description{
-Generates a combined plot from multiple individual flow cytometry plots.
-This function utilizes `MBR_flow_plot` to generate individual plots based on specified parameters
-and then arranges them into a grid using `ggarrange`.
+Calls MBR_flow_plot for each channel pair and arranges the resulting plots with ggpubr.
+}
+\details{
+plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same uppercase cluster-label and row-order rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
+}
+\examples{
+\donttest{
+set.seed(42)
+dat <- data.frame(FSC = runif(100, 1, 1000), SSC = runif(100, 1, 1000),
+                  DNA = runif(100, 1, 1000))
+p <- MBR_plot(dat, plot_params = list(list(x = "FSC", y = "SSC"),
+                                      list(x = "FSC", y = "DNA")), nrow = 1)
+stopifnot(inherits(p, "ggplot"))
+print(p)
+}
+
 }

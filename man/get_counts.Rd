@@ -2,13 +2,28 @@
 % Please edit documentation in R/dependent.R
 \name{get_counts}
 \alias{get_counts}
-\title{Get Count Tables Function}
+\title{Combine per-sample cluster count matrices}
 \usage{
 get_counts(data)
 }
 \arguments{
-\item{data}{Input data list}
+\item{data}{Named list of sample lists, each containing a numeric data matrix with matching channels.}
+}
+\value{
+A named list of numeric cluster-by-sample matrices, one per available count resolution.
 }
 \description{
-Get Count Tables Function
+Collects count resolutions across samples, aligns cluster rows, and combines count columns.
+}
+\details{
+data is a named list of sample lists with counts produced by count_observations. For each resolution, samples lacking it are omitted; they do not get a zero column. Cluster IDs are the numeric row names of per-sample count matrices, sorted numerically. Missing cluster rows in a included sample are filled with zeros. Each input count matrix is treated as a single column. Result row names are lowercase v-prefixed IDs and column names come from outer sample-list names, not data$name. This establishes the abundance-column convention used by MBR_violin after transposing. No normalization or hypothesis test is performed.
+}
+\examples{
+a <- count_observations(list(name = "A", classes = c(1, 1, 3)), "4")
+b <- count_observations(list(name = "B", classes = c(2, 3)), "4")
+y <- get_counts(list(A = a, B = b))
+stopifnot(identical(dim(y[["4"]]), c(4L, 2L)),
+          identical(rownames(y[["4"]]), paste0("v", 1:4)),
+          identical(as.numeric(colSums(y[["4"]])), c(3, 2)))
+
 }

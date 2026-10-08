@@ -2,15 +2,28 @@
 % Please edit documentation in R/dependent.R
 \name{count_observations}
 \alias{count_observations}
-\title{Count Observations Function}
+\title{Count sample events over a full cluster index range}
 \usage{
 count_observations(data, clusters)
 }
 \arguments{
-\item{data}{Input data}
+\item{data}{Sample list containing the fields described in Details.}
 
-\item{clusters}{Cluster names}
+\item{clusters}{A single positive integer or numeric string giving both the resolution name and maximum cluster ID.}
+}
+\value{
+A copy of data with counts holding one cluster-by-one-sample matrix, named by the requested resolution.
 }
 \description{
-Count Observations Function
+Counts classes into bins 1 through the requested maximum and stores a one-column count matrix.
+}
+\details{
+clusters[1] is converted to a positive number and used as BOTH the count-resolution name and the maximum cluster ID. Supply a single positive integer or numeric string, not a vector of cluster labels. Classes outside 1:max_cluster_id, including missing values, do not contribute to the table. Empty valid bins receive zero counts. No warning identifies discarded classes, so verify that the sum equals the intended number of events. data$name supplies the output column name. Existing counts are replaced, not extended. Counts describe mapped events and are not normalized abundances.
+}
+\examples{
+x <- list(name = "sample", classes = c(1, 1, 3))
+y <- count_observations(x, clusters = "4")
+stopifnot(identical(as.numeric(y$counts[["4"]]), c(2, 0, 1, 0)),
+          sum(y$counts[["4"]]) == length(x$classes))
+
 }

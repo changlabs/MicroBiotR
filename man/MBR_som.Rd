@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_som}
 \alias{MBR_som}
-\title{SOM-based clustering analysis pipeline}
+\title{Train a shared SOM and export sample cluster abundances}
 \usage{
 MBR_som(
   gated_fcs = NULL,
@@ -13,16 +13,41 @@ MBR_som(
 )
 }
 \arguments{
-\item{gated_fcs}{A list of gated flow cytometry data frames}
+\item{gated_fcs}{Named list of samples, each list containing name and a numeric event matrix data.}
 
 \item{m}{Number of SOM nodes (default 2000)}
 
-\item{n_hclust}{Number of hierarchical clusters (default 300)}
+\item{n_hclust}{Reserved argument, default 300; currently unused by the implementation.}
 
 \item{n_cells_sub}{Number of cells to subsample (default 300,000)}
 
 \item{out_path}{Output directory path (default './')}
 }
+\value{
+No analytical object is returned; the last console call returns invisible NULL. Retrieve tables from the documented files or global variables.
+}
 \description{
-SOM-based clustering analysis pipeline
+Pools a balanced random subset of gated events, trains a hexagonal self-organizing map, maps retained samples to its nodes, and writes counts and mapped FCS files.
+}
+\details{
+Each named sample must contain name and a numeric data matrix with identical channels in identical order. The pooled training subset gives each sample an equal target contribution, capped by its available events. A SOM learns prototype vectors (codebook rows) representing similar multichannel events; mapping assigns each event to a best matching prototype. No explicit channel standardization is applied here. Channel units and transformations therefore affect the fit.
+
+The grid side is round(sqrt(m)); the actual node count is its square. Despite the n_hclust argument, this implementation does not perform hierarchical clustering. Node labels and count levels are fixed at 2025. The default m = 2000 produces a 45 by 45 grid, matching that mapping; other grid sizes can omit nodes or create unused levels. Samples with fewer than 200000 events are removed before sampling and training. If none remain, the function stops.
+
+Rare clusters are counted by feature column: a cluster is rare when its abundance is below 0.01% in every retained sample.
+
+Writes cluster_information.csv, SOM.csv, count_tables/count_table_SOM.save, and one FCS file per sample in MappedFCS. Assigns cohonen_information, raw_count_table, and count_table in the global environment. The codebook spelling is intentionally retained. Seeds are not set internally; call set.seed before use. Existing output files may be replaced.
+}
+\examples{
+\dontrun{
+# Large example: use real gated samples with at least 200000 events each.
+# gated <- list(sample1 = list(name = "sample1.fcs", data = events1),
+#               sample2 = list(name = "sample2.fcs", data = events2))
+set.seed(42)
+out <- tempfile("som-")
+MBR_som(gated_fcs = gated, out_path = out)
+stopifnot(file.exists(file.path(out, "SOM.csv")),
+          all(abs(rowSums(count_table) - 1) < 1e-8))
+}
+
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_fs}
 \alias{MBR_fs}
-\title{Feature Selection using Recursive Feature Elimination with Random Forest}
+\title{Select features with random forest recursive elimination}
 \usage{
 MBR_fs(
   data = NULL,
@@ -31,7 +31,7 @@ MBR_fs(
 
 \item{top_n_features}{Number of top features to display in the importance plot (default: 20).}
 
-\item{rfe_size}{Maximum number of features considered during RFE (default: 10).}
+\item{rfe_size}{Largest requested subset size in 1:rfe_size (default 10); caret also evaluates the full predictor set.}
 
 \item{ref_group}{Reference group name for effect size calculation (default: NULL).}
 
@@ -41,7 +41,36 @@ MBR_fs(
 
 \item{height}{Height of the output PDF plot in inches (default: 5).}
 }
+\value{
+Invisible NULL; selected feature data are available as MBR_selected_features and files.
+}
 \description{
-Performs feature selection on input data using Recursive Feature Elimination (RFE) with a Random Forest model.
-The function outputs selected features, saves them as CSV files, and generates plots for variable importance and effect sizes.
+Uses cross-validated recursive feature elimination and produces feature importance and transformed abundance effect-size plots.
+}
+\details{
+The wrapper sets the random seed to 2025. Row-aligned numeric features and a metadata grouping column are required. caret::rfe with rfFuncs evaluates requested subset sizes 1:rfe_size and, through caret defaults, the full predictor set using nfolds_cv-fold cross-validation; use rfe_size no greater than the feature count and enough observations per class for all folds. The selected subset is results$optVariables. top_n_features controls how many selected variables are displayed, not the size searched.
+
+Random forests combine trees fitted to bootstrap samples and random predictor subsets. RFE ranks predictors and compares candidate subsets using resampling. Importance can be unstable when predictors are correlated. Effect-size plots use log10(value + 1), despite an axis label saying log10(abundance). Cohen's d is a standardized difference in group means; its sign depends on group ordering and ref_group. The displayed 95 percent intervals and effects are calculated after selecting features on these same data, so they are exploratory rather than selection-adjusted inference. Use two groups for this workflow and keep feature selection inside an outer resampling loop when evaluating predictive performance.
+
+Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features using superassignment, normally into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
+}
+\examples{
+\dontrun{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+MBR_fs(data, out_path = out, meta_data = meta, group_name = "Group",
+       nfolds_cv = 2, rfe_size = 3, top_n_features = 3, ref_group = "A")
+stopifnot(nrow(MBR_selected_features) == nrow(data),
+          all(names(MBR_selected_features) \%in\% names(data)))
+}
+
+}
+\references{
+\url{https://topepo.github.io/caret/recursive-feature-elimination.html}
+\url{https://rpkgs.datanovia.com/rstatix/reference/cohens_d.html}
 }

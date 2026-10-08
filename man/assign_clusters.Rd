@@ -2,15 +2,27 @@
 % Please edit documentation in R/dependent.R
 \name{assign_clusters}
 \alias{assign_clusters}
-\title{Cluster Label Assignment Function}
+\title{Translate SOM node indices into cluster labels}
 \usage{
 assign_clusters(data, clusters)
 }
 \arguments{
-\item{data}{Input data}
+\item{data}{Sample list containing the fields described in Details.}
 
-\item{clusters}{Cluster definition matrix}
+\item{clusters}{Matrix or data frame whose first column maps node row positions to cluster labels.}
+}
+\value{
+A copy of data whose classes field contains the looked-up cluster labels.
 }
 \description{
-Cluster Label Assignment Function
+Looks up each event node index in the first column of a node-to-cluster mapping.
+}
+\details{
+Uses som$unit.classif when present, otherwise classes. A present SOM assignment takes precedence over existing classes. clusters is a matrix or data frame with one row per SOM node; row POSITION, not row name, controls lookup. The first column supplies cluster labels; further columns are ignored. Node indices are converted with as.numeric, so factors can be interpreted as level codes rather than displayed labels. Invalid lookup results may generate NA and a warning. No clustering algorithm is run here. This helper is internal: use MicroBiotR:::assign_clusters rather than a direct package export.
+}
+\examples{
+x <- list(name = "sample", classes = c(1, 2, 1, 3))
+y <- MicroBiotR:::assign_clusters(x, matrix(c(1, 1, 2), ncol = 1))
+stopifnot(identical(as.numeric(y$classes), c(1, 1, 1, 2)))
+
 }

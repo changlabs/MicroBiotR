@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_stat}
 \alias{MBR_stat}
-\title{Statistical Test Helper for SOM Cluster Features}
+\title{Test each abundance feature between sample groups}
 \usage{
 MBR_stat(
   data = NULL,
@@ -15,7 +15,7 @@ MBR_stat(
 )
 }
 \arguments{
-\item{data}{A data frame or matrix with samples in rows and features in columns.}
+\item{data}{A numeric data frame with samples in rows and features in columns.}
 
 \item{meta_data}{A data frame containing sample metadata. Must include the grouping column.}
 
@@ -29,7 +29,37 @@ MBR_stat(
 
 \item{out_path}{Path to directory where result CSV files will be saved (default: current directory).}
 }
+\value{
+The significant feature data frame, returned invisibly by the final assign call; pvalue_data is also assigned globally.
+}
 \description{
-Performs group-wise statistical testing (e.g., Wilcoxon, Kruskal-Wallis, ANOVA, t-test)
-on each feature (column) in a data matrix based on sample grouping from metadata.
+Computes one group-comparison p-value per feature, optionally adjusts for multiple testing, and exports significant feature columns.
+}
+\details{
+Numeric matrices and data frames are accepted. Sample row names are matched to metadata row names and reordered when needed; mismatched IDs stop the analysis. Without usable IDs, positional matching emits a warning.
+
+wilcox uses the unpaired, two-sided Wilcoxon rank-sum test for two groups. It compares rank distributions; interpreting it purely as a median comparison requires similarly shaped distributions. kruskal uses the Kruskal-Wallis rank test for two or more independent groups; a significant omnibus test does not identify the differing pairs. anova fits a one-way ANOVA testing equality of means, with independent errors and approximately normal residuals of similar variance. t.test (also ttest) uses the unpaired two-sided Welch test, allowing unequal variances, for two groups. None of these branches supports paired samples, covariate adjustment, or repeated measurements.
+
+BH and fdr both request Benjamini-Hochberg adjustment, controlling false discovery rate under its dependence assumptions. bonferroni controls family-wise error through a more conservative adjustment. none, the default, leaves p-values unadjusted. Selection uses p.adj < cutoff, strictly excluding equality. Feature-wise tests on proportions remain affected by compositional dependence.
+
+Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
+}
+\examples{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+MBR_stat(data, meta, "Group", correction = "BH", out_path = out)
+stopifnot(nrow(pvalue_data) == ncol(data),
+          all(pvalue_data$p.adj >= 0 & pvalue_data$p.adj <= 1),
+          file.exists(file.path(out, "pvalue.csv")))
+
+}
+\references{
+\url{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/wilcox.test.html}
+\url{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/t.test.html}
+\url{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html}
 }

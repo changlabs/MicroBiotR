@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_save}
 \alias{MBR_save}
-\title{Save Filtered FlowFrame as FCS File}
+\title{Export selected cluster events to a new FCS file}
 \usage{
 MBR_save(fcs_files, dat, selected_rows, file_index = 1, rawdata_path)
 }
@@ -15,10 +15,33 @@ MBR_save(fcs_files, dat, selected_rows, file_index = 1, rawdata_path)
 
 \item{file_index}{An integer index indicating which FCS file to extract from `fcs_files`. Defaults to 1.}
 
-\item{output_dir}{A string specifying the directory where the new FCS file will be saved.}
+\item{rawdata_path}{Parent directory in which FilteredFCS will be created.}
+}
+\value{
+The output filename, returned invisibly.
 }
 \description{
-This function extracts specific events from a processed flow cytometry dataset
-(`dat`) based on selected SOM clusters (`selected_rows`) and saves them as a
-new `.fcs` file using the metadata and structure from the original FlowFrame
+Filters processed events by cluster and rebuilds a flowFrame using original FCS parameter metadata.
+}
+\details{
+Selects events using uppercase V-prefixed cluster labels derived from dat$classes, then removes classes from exported channels. Exports the values in dat as supplied, which may already have been transformed by MBR_process; it does not restore raw instrument values. Channel names must match the original flowFrame for parameter metadata matching. Renamed channels can produce unmatched metadata or warnings, and inherited parameter ranges may be inconsistent with transformed values.
+
+Rebuilds parameter fields and FCS description keys, preserving non-parameter description entries and updating total event and channel counts. Missing required metadata columns are filled with NA with a warning. Biobase and flowCore accessors are qualified by namespace. No event order correspondence to raw data is checked. Test exports by rereading and checking event counts and channels before downstream use.
+
+Creates rawdata_path/FilteredFCS and writes <original_basename>_filtered.fcs. Existing output files can be overwritten. The public output-directory argument is rawdata_path, not output_dir.
+}
+\examples{
+\dontrun{
+library(flowCore)
+library(Biobase)
+fcs <- MBR_read("path/to/mapped_fcs")
+# Keep original names and values for a conservative export example.
+dat <- MBR_process(fcs, transformation = identity)
+selected <- c("V1", "V2")
+out <- tempfile("filtered-")
+filename <- MBR_save(fcs, dat, selected, rawdata_path = out)
+check <- flowCore::read.FCS(filename, transformation = FALSE)
+stopifnot(nrow(flowCore::exprs(check)) == sum(paste0("V", dat$classes) \%in\% selected))
+}
+
 }

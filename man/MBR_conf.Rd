@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_conf}
 \alias{MBR_conf}
-\title{Confusion Matrix Visualization for Random Forest Classification}
+\title{Evaluate random forest classification with a confusion heatmap}
 \usage{
 MBR_conf(
   data = NULL,
@@ -15,7 +15,9 @@ MBR_conf(
   height = 5,
   method = "repeatedcv",
   number = 5,
-  repeats = 5
+  repeats = 5,
+  test_data = NULL,
+  test_meta_data = NULL
 )
 }
 \arguments{
@@ -40,8 +42,41 @@ MBR_conf(
 \item{number}{Number of folds or resampling iterations (default: 5).}
 
 \item{repeats}{Number of repeats for repeated cross-validation (default: 5).}
+
+\item{test_data}{Optional numeric feature table for an independent test set, with the same feature names as data.}
+
+\item{test_meta_data}{Metadata for test_data, with sample IDs and group_name. Supply both test arguments together.}
+}
+\value{
+An invisible list containing the fitted model, sample-level diagnostic predictions and confusion metrics; MBR_ml also returns the ROC object and plot.
 }
 \description{
-Trains a random forest classifier using input data and metadata, generates a confusion matrix comparing
-predicted and true group labels, and visualizes it as a heatmap. The result is saved as a PDF.
+Fits a caret random forest classifier and saves a diagnostic plot based on held-out resampling predictions, or an optional independent test set.
+}
+\details{
+Numeric predictors and row-aligned metadata with exactly two classes are required. Class labels must be valid R names for caret probability columns, and reference_level must identify a present class. Resampling settings are passed to caret::trainControl; caret tunes a random forest using ROC as its selection metric. The wrapper requires the randomForest backend. number and repeats configure the selected method; repeats is relevant to repeatedcv.
+
+By default, plots use held-out caret predictions for the selected tuning parameters, averaged across repeats once per sample. These are cross-validation diagnostics, not independent validation after tuning or upstream feature selection. For independent evaluation, supply test_data and test_meta_data from samples unused in feature selection, preprocessing estimation and tuning. The fitted model, predictions and confusion metrics are returned invisibly.
+
+Writes ml_group.txt and the PDF in out_path; creates the directory recursively if absent. Existing files can be overwritten.
+
+Unlike MBR_ml, this function does not set a random seed; call set.seed before use. The heatmap labels are event counts (samples here), while fill is natural log(Freq + 1), making small cells visible alongside large ones. It shows no uncertainty intervals or ROC curve.
+}
+\examples{
+\donttest{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+MBR_conf(data, meta, group_name = "Group", out_path = out,
+       reference_level = "A", number = 2, repeats = 1)
+stopifnot(file.exists(file.path(out, "confusion_matrix.pdf")))
+}
+
+}
+\references{
+\url{https://search.r-project.org/CRAN/refmans/randomForest/html/randomForest.html}
 }

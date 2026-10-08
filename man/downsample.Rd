@@ -2,17 +2,33 @@
 % Please edit documentation in R/dependent.R
 \name{downsample}
 \alias{downsample}
-\title{Data Downsampling Function}
+\title{Pool a balanced random subset of sample events}
 \usage{
 downsample(data, n = 1e+06, samples = names(data))
 }
 \arguments{
-\item{data}{Input data list}
+\item{data}{Named list of sample lists, each containing a numeric data matrix with matching channels.}
 
-\item{n}{Total sampling size}
+\item{n}{Target total pooled event count, divided equally across selected samples; default 1000000.}
 
-\item{samples}{Sample names to be sampled}
+\item{samples}{Character vector of names in data to include; defaults to all sample names.}
+}
+\value{
+A pooled event matrix, normally with at most n rows; no labels or sample identifiers are added.
 }
 \description{
-Data Downsampling Function
+Randomly samples up to an equal quota from each selected sample and row-binds the results.
+}
+\details{
+data is a named list of samples, each containing a data matrix with identical channels in the same order. n is a target for the combined number of events, not a per-sample size. The quota is n divided by the number of selected samples; smaller samples contribute all available rows and unused quotas are not redistributed. Fractional quotas are passed to sample and can be truncated. Sampling is without replacement and the function does not set a seed.
+
+The samples argument filters membership but retains input-list order. Select at least one existing nonempty sample. Supply matrices with at least two columns because row extraction does not use drop = FALSE. Pooling discards sample identity; use the original sample list for later sample-level counts. Balanced sampling reduces domination by deeply measured samples but does not remove biological or batch confounding.
+}
+\examples{
+set.seed(42)
+a <- matrix(seq_len(40), ncol = 2)
+x <- list(A = list(name = "A", data = a), B = list(name = "B", data = a + 1))
+y <- downsample(x, n = 12)
+stopifnot(is.matrix(y), nrow(y) == 12, ncol(y) == 2)
+
 }

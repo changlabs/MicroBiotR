@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_violin}
 \alias{MBR_violin}
-\title{Violin Plot of Cluster Abundance by Group with P-value Annotation}
+\title{Plot one cluster abundance and an existing p-value}
 \usage{
 MBR_violin(
   data = NULL,
@@ -18,7 +18,7 @@ MBR_violin(
 )
 }
 \arguments{
-\item{data}{A data frame or matrix with samples in rows and cluster features in columns.}
+\item{data}{A numeric data frame with samples in rows and lowercase v-prefixed cluster columns.}
 
 \item{meta_data}{A data frame containing sample metadata, including grouping information.}
 
@@ -26,20 +26,40 @@ MBR_violin(
 
 \item{pvalue_data}{A data frame or matrix containing p-values for each cluster.}
 
-\item{p}{Character string specifying which p-value column to use from `pvalue_data`. 
-Must be either `"p.value"` or `"p.adj"`. Default is `"p.value"`.}
+\item{p}{Character string specifying which p-value column to use from `pvalue_data`. Must be either `"p.value"` or `"p.adj"`. Default is `"p.value"`.}
 
 \item{cluster}{Numeric value specifying which cluster to plot.}
 
 \item{out_path}{Directory path to save the output PDF (default: current directory).}
 
-\item{colors}{Vector of colors for the groups (default: c('#E41A1C', '#377EB8')).}
+\item{colors}{Group fill colors; default c("#FFADAD", "#DEDAF4").}
 
 \item{width}{Width of the saved PDF (default: 4).}
 
 \item{height}{Height of the saved PDF (default: 4).}
 }
+\value{
+Invisible NULL; the plot is printed and saved, rather than returned.
+}
 \description{
-Generates a violin plot for a specified SOM cluster showing relative abundance across groups,
-and annotates the plot with the corresponding p-value from statistical testing.
+Draws a violin and box plot for one cluster and annotates a supplied raw or adjusted p-value.
+}
+\details{
+Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 selects the lowercase column v1 and the row v1 of pvalue_data. Metadata rows must match data order. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
+
+A violin is a smoothed density estimate, and the overlaid box plot summarizes the median and interquartile range. The abundance label assumes data already contains proportions. Supply enough colors for all groups. The annotation is positioned at x = 1.5, appropriate for a two-group comparison. Writes violin_cluster_<cluster>_<p>.pdf to an existing directory and prints the plot.
+}
+\examples{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+MBR_stat(data, meta, "Group", correction = "BH", out_path = out)
+MBR_violin(data, meta, "Group", pvalue_data, p = "p.adj",
+           cluster = 1, out_path = out)
+stopifnot(file.exists(file.path(out, "violin_cluster_1_p.adj.pdf")))
+
 }

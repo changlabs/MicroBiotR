@@ -1,3 +1,10 @@
+# Standalone, instrument-specific R workflow; see docs/Gating.md for every stage
+# and helper, prerequisites, fixed thresholds, examples and known limitations.
+# This file is outside R/ and is not run when the package is installed.
+# Sourcing runs the analysis immediately and writes to /R_out/data and /R_out/graphs.
+# Requires at least six compatible FCS samples and the original channel names.
+# Executable statements are preserved; do not assume these gates fit another instrument.
+
 # ----------------------------
 # Load libraries
 # ----------------------------
@@ -42,6 +49,8 @@ p <- ggcyto(data = gs_pop_get_data(ig_gs[tmp_sam]),
             mapping = aes(x = "FSC PAR", y = "SSC")) +
   geom_hex(bins = 128)
 
+# Build fixed scatter boundaries via private openCyto .boundary; validate raw units.
+# Returns the gate result used by gs_pop_add; no fitted or statistical threshold.
 gate_debris <- function(data) {
   openCyto:::.boundary(data, channels = c("FSC PAR", "SSC"),
                        min = c(2000, 2000), max = c(6.3e4, 6.3e4))
@@ -61,6 +70,8 @@ dir.create(tmp_path, recursive = TRUE, showWarnings = FALSE)
 pdf(file = file.path(tmp_path, "Ig_gate_debris.pdf"), onefile = TRUE,
     bg = "transparent", width = 7, height = 7)
 
+# Return a scatter density/gate plot; caught errors return an empty Error plot.
+# path is unused; surrounding PDF export must explicitly render intended plots.
 plot_gate_debr <- function(data, gate, path = tmp_path) {
   tryCatch({
     ggcyto(data, subset = gate,
@@ -85,6 +96,8 @@ p <- ggcyto(data = ig_gs[tmp_sam],
             mapping = aes(x = "FSC PAR", y = "DNA")) +
   geom_hex(bins = 128)
 
+# Return a fixed FSC PAR / DNA polygonGate; data is unused.
+# The parent population supplies the intersection with the earlier debris gate.
 gate_dna <- function(data, channels = c("FSC PAR", "Hoechst Red")) {
   tmp_mat <- matrix(c(
     2.0e3, 6.5e4, 6.5e4, 2.0e3,   # FSC PAR
@@ -102,6 +115,8 @@ recompute(ig_gs)
 pdf(file = file.path(tmp_path, "Ig_gate_dna.pdf"), onefile = TRUE,
     bg = "transparent", width = 7, height = 7)
 
+# Return a DNA density/gate plot; errors return an empty Error plot.
+# path is unused; geom_stats reports descriptive event fractions, not p-values.
 plot_gate_dna <- function(data, gate, path = tmp_path) {
   tryCatch({
     ggcyto(data, subset = gate,
@@ -121,6 +136,8 @@ dev.off()
 # ----------------------------
 # Autoplot: show all gating
 # ----------------------------
+# Return autoplot for a gating hierarchy with instrument axis limits.
+# nodes is unused; it does not restrict the populations plotted.
 plot_gating <- function(x, nodes = gs_get_pop_paths(ig_gs)) {
   autoplot(x, bins = 64, nrow = 1, ylim = "instrument", xlim = "instrument")
 }
@@ -133,6 +150,8 @@ dev.off()
 # ----------------------------
 # Extract gated single-cell data
 # ----------------------------
+# Return list(name, data) from one gated population, optionally selecting channels.
+# Appends matching marker labels; inspect sparse subsets for matrix shape.
 get_sc_gated <- function(data, node, channels = NULL) {
   tmp_name <- pData(data[[1]])$name
   tmp_mat <- exprs(gh_pop_get_data(data, y = node))

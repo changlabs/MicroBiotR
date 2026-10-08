@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_circle}
 \alias{MBR_circle}
-\title{Circular Heatmap Visualization for Grouped Data}
+\title{Draw group means in a circular heatmap}
 \usage{
 MBR_circle(
   data = NULL,
@@ -16,7 +16,7 @@ MBR_circle(
 )
 }
 \arguments{
-\item{data}{A data frame or matrix with samples in rows and features in columns.}
+\item{data}{A numeric data frame with samples in rows and features in columns.}
 
 \item{meta_data}{A data frame containing sample metadata with grouping information.}
 
@@ -32,7 +32,26 @@ MBR_circle(
 
 \item{cell_colors}{Vector of three colors for the heatmap gradient (default: c("blue", "white", "red")).}
 }
+\value{
+Invisible NULL from the final console call; the plot is drawn and saved.
+}
 \description{
-Creates a circular heatmap of mean feature values by group, with an additional track
-showing the mean differences between the first two groups.
+Displays feature means by group and a separate track for the difference between the first two group means.
+}
+\details{
+Use a numeric data frame and row-aligned metadata. tapply orders the grouping levels; mean_table columns, rather than order of appearance in metadata, determine the subtraction first group minus second group. At least two groups are needed and the difference track is intended for two groups. Means are calculated without na.rm, so missing values propagate. The color midpoint is the midpoint of the overall minimum and maximum, not the overall mean. Constant means or differences can make color breaks or track limits degenerate.
+
+This is a descriptive plot, with no hypothesis test or uncertainty interval. Group means can hide sample heterogeneity. The function draws on the active graphics device, resets circlize state, then redraws into circle.pdf. out_path must already exist.
+}
+\examples{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+MBR_circle(data, meta, "Group", out_path = out)
+stopifnot(file.exists(file.path(out, "circle.pdf")))
+
 }
