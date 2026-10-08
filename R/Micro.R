@@ -46,7 +46,7 @@
 #'
 #' The grid side is round(sqrt(m)); the actual node count is its square. Despite the n_hclust argument, this implementation does not perform hierarchical clustering. Node labels and count levels are fixed at 2025. The default m = 2000 produces a 45 by 45 grid, matching that mapping; other grid sizes can omit nodes or create unused levels. Samples with fewer than 200000 events are removed before sampling and training. If none remain, the function stops.
 #'
-#' Rare clusters are counted by feature column: a cluster is rare when its abundance is below 0.01% in every retained sample.
+#' Rare clusters are counted by feature column: a cluster is rare when its abundance is below 0.01 percent in every retained sample.
 #'
 #' Writes cluster_information.csv, SOM.csv, count_tables/count_table_SOM.save, and one FCS file per sample in MappedFCS. Assigns cohonen_information, raw_count_table, and count_table in the global environment. The codebook spelling is intentionally retained. Seeds are not set internally; call set.seed before use. Existing output files may be replaced.
 #'

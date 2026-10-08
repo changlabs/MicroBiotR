@@ -361,7 +361,7 @@ MBR_ml(
 
 ![Flow-cytometry random forest ROC diagnostic](figure/roc.png)
 
-*This illustrative figure uses the example dataset; rerun the chunk to obtain the current model diagnostics. The curve plots sensitivity against the false-positive rate, and the dashed diagonal represents chance-level discrimination. The shaded band shows the sensitivity confidence interval; annotations report AUC and classification metrics. These describe this fitted example rather than independent test-set performance.*
+*The curve plots sensitivity against the false-positive rate, and the dashed diagonal represents chance-level discrimination. The shaded band shows the sensitivity confidence interval; annotations report AUC and classification metrics. These describe this fitted example rather than independent test-set performance.*
 
 ## 10. Confusion matrix
 
@@ -387,7 +387,7 @@ MBR_conf(
 
 ![Confusion matrix for CD and HC](figure/conf.png)
 
-*This illustrative figure uses the example dataset; rerun the chunk to obtain the current model diagnostics. Columns indicate true groups and rows indicate predicted groups. Diagonal cells count correct predictions; off-diagonal cells count errors. Cell labels give sample counts, while color uses a logarithmic count scale.*
+*Columns indicate true groups and rows indicate predicted groups. Diagonal cells count correct predictions; off-diagonal cells count errors. Cell labels give sample counts, while color uses a logarithmic count scale.*
 
 ## 11. Reclustering
 
