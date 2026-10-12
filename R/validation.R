@@ -94,3 +94,50 @@
   }
   invisible(NULL)
 }
+
+# Canonical cluster IDs used ONLY for matching, never to rename caller data.
+# A cluster label is exactly v/V followed by digits: v12 and V12 become V12.
+# Other feature names retain their spelling and remain case-sensitive. Leading
+# zeros are preserved, so V01 and V1 remain distinct. Numeric SOM row names are
+# not converted here; event classes are handled separately below.
+# Set unique = FALSE for repeated event labels, where repeats are expected.
+.mbr_cluster_ids <- function(labels, context = "Cluster labels", unique = TRUE) {
+  labels <- as.character(labels)
+  if (anyNA(labels) || any(!nzchar(labels))) {
+    stop(context, " must be nonmissing and nonempty.", call. = FALSE)
+  }
+  ids <- sub("^[vV]([0-9]+)$", "V\\1", labels)
+  if (unique && anyDuplicated(ids)) {
+    stop(context, " contain duplicate or case-ambiguous IDs: ",
+         paste(base::unique(ids[duplicated(ids)]), collapse = ", "), call. = FALSE)
+  }
+  ids
+}
+
+# Return indices in requested order after normalizing BOTH sides. This supports
+# cross-table matches (e.g. V1 data and v1 p-value rows) without modifying either
+# table. Ambiguous available/requested names fail rather than selecting the first
+# match; missing IDs fail rather than yielding NA rows or an empty event export.
+.mbr_cluster_match <- function(requested, available, context = "Available clusters") {
+  wanted <- .mbr_cluster_ids(requested, "Requested clusters")
+  supplied <- .mbr_cluster_ids(available, context)
+  indices <- match(wanted, supplied)
+  if (anyNA(indices)) {
+    stop(context, " missing requested clusters: ",
+         paste(requested[is.na(indices)], collapse = ", "), call. = FALSE)
+  }
+  indices
+}
+
+# SOM event classes may be numeric (1), numeric strings ("1"), or prefixed
+# labels ("v1"/"V1"). Add a prefix only to wholly numeric strings. Validate
+# distinct raw labels first so v1/V1 collisions are caught, while repeated
+# occurrences of the same class remain valid and preserve event order.
+.mbr_event_ids <- function(classes) {
+  labels <- as.character(classes)
+  distinct <- base::unique(labels)
+  distinct <- ifelse(grepl("^[0-9]+$", distinct), paste0("V", distinct), distinct)
+  .mbr_cluster_ids(distinct, "Event classes")
+  labels <- ifelse(grepl("^[0-9]+$", labels), paste0("V", labels), labels)
+  .mbr_cluster_ids(labels, "Event classes", unique = FALSE)
+}

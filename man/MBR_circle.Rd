@@ -39,6 +39,8 @@ Invisible NULL from the final console call; the plot is drawn and saved.
 Displays feature means by group and a separate track for the difference between the first two group means.
 }
 \details{
+Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
+
 Use a numeric data frame and row-aligned metadata. tapply orders the grouping levels; mean_table columns, rather than order of appearance in metadata, determine the subtraction first group minus second group. At least two groups are needed and the difference track is intended for two groups. Means are calculated without na.rm, so missing values propagate. The color midpoint is the midpoint of the overall minimum and maximum, not the overall mean. Constant means or differences can make color breaks or track limits degenerate.
 
 This is a descriptive plot, with no hypothesis test or uncertainty interval. Group means can hide sample heterogeneity. The function draws on the active graphics device, resets circlize state, then redraws into circle.pdf. out_path must already exist.

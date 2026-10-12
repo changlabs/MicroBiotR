@@ -39,7 +39,7 @@ The arranged ggpubr plot object.
 Calls MBR_flow_plot for each channel pair and arranges the resulting plots with ggpubr.
 }
 \details{
-plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same uppercase cluster-label and row-order rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
+plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same case-insensitive cluster-label matching rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
 }
 \examples{
 \donttest{

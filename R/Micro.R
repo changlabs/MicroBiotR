@@ -441,6 +441,8 @@ MBR_stat <- function(data = NULL, meta_data = NULL, group_col = NULL,
 #' @param cell_colors Vector of three colors for the heatmap gradient (default: c("blue", "white", "red")).
 #'
 #' @details
+#' Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
+#'
 #' Use a numeric data frame and row-aligned metadata. tapply orders the grouping levels; mean_table columns, rather than order of appearance in metadata, determine the subtraction first group minus second group. At least two groups are needed and the difference track is intended for two groups. Means are calculated without na.rm, so missing values propagate. The color midpoint is the midpoint of the overall minimum and maximum, not the overall mean. Constant means or differences can make color breaks or track limits degenerate.
 #'
 #' This is a descriptive plot, with no hypothesis test or uncertainty interval. Group means can hide sample heterogeneity. The function draws on the active graphics device, resets circlize state, then redraws into circle.pdf. out_path must already exist.
@@ -470,7 +472,9 @@ MBR_circle <- function(data = NULL, meta_data = NULL, group_col = NULL,
 
   group_labels <- as.vector(unlist(meta_data[group_col]))
   mean_table <- t(sapply(data, function(t) tapply(t, group_labels, mean)))
-  rownames(mean_table) <- gsub('V', 'Bin', rownames(mean_table))
+  # Validate case collisions, then format only complete cluster IDs for display.
+  cluster_ids <- .mbr_cluster_ids(rownames(mean_table), "Feature names")
+  rownames(mean_table) <- sub('^V([0-9]+)$', 'Bin\\1', cluster_ids)
   min_val <- min(mean_table)
   max_val <- max(mean_table)
   mean_val <- (min_val + max_val) / 2
@@ -547,6 +551,8 @@ MBR_circle <- function(data = NULL, meta_data = NULL, group_col = NULL,
 #' @param height Height of the saved PDF (default: 4).
 #'
 #' @details
+#' Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
+#'
 #' Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 selects the lowercase column v1 and the row v1 of pvalue_data. Metadata rows must match data order. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
 #'
 #' A violin is a smoothed density estimate, and the overlaid box plot summarizes the median and interquartile range. The abundance label assumes data already contains proportions. Supply enough colors for all groups. The annotation is positioned at x = 1.5, appropriate for a two-group comparison. Writes violin_cluster_<cluster>_<p>.pdf to an existing directory and prints the plot.
@@ -579,11 +585,12 @@ MBR_violin <- function(data = NULL, meta_data = NULL, group_col = NULL,
 
 
 
-  cluster_name <- paste0("v", cluster)
-
-  cluster_values <- data[[cluster_name]]
-
-  p_val_numeric <- as.numeric(pvalue_data[cluster_name, p])
+  # Match data and p-value labels independently; their prefix case may differ.
+  cluster_id <- paste0("V", cluster)
+  data_index <- .mbr_cluster_match(cluster_id, names(data), "Data columns")
+  pvalue_index <- .mbr_cluster_match(cluster_id, rownames(pvalue_data), "P-value rows")
+  cluster_values <- data[[data_index]]
+  p_val_numeric <- as.numeric(pvalue_data[pvalue_index, p])
   p_val_label <- format(p_val_numeric, digits = 3, scientific = TRUE)
 
   plot_df <- data.frame(
@@ -989,6 +996,8 @@ MBR_fs <- function(data = NULL, out_path = './',
 #' @param legend Logical, whether to display the legend (default TRUE).
 #'
 #' @details
+#' Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
+#'
 #' Only the column names of data select clusters; its abundance values are not plotted. Both v1 and V1 are converted to V1 for lookup, so cohonen_information must have matching UPPERCASE V-prefixed row names. MBR_som's codebook normally has numeric row names; adapt a copy before passing it here. Missing matches yield missing rows.
 #'
 #' The plotted matrix contains prototype channel values. Row scaling standardizes channels within each selected node; column scaling standardizes nodes within each channel; none preserves input units. These different choices change the interpretation of color. Constant rows or columns may fail when scaled. Optional clustering uses pheatmap defaults; it does not alter the package's original SOM assignments. A numeric conversion df_mat is computed but the original subset df is actually plotted. The argument boarder_color is intentionally spelled as in the implementation. Writes heatmap.pdf and draws the plot; out_path must exist.
@@ -1017,9 +1026,11 @@ MBR_heatmap <- function(data = NULL, cohonen_information = NULL,
                       scale = 'row', cluster_rows = F, cluster_cols = F,
                       display_numbers = T, boarder_color = 'grey60',
                       legend = T) {
-  cluster_ids <- paste0('V', gsub('^[vV]', '', colnames(data)))
-  rownames(cohonen_information) <- as.character(rownames(cohonen_information))
-  df <- cohonen_information[cluster_ids, , drop = FALSE]
+  # Preserve numeric abundance-column support, and match either prefix case
+  # against the codebook without changing its original row names.
+  cluster_ids <- .mbr_event_ids(colnames(data))
+  cluster_index <- .mbr_cluster_match(cluster_ids, rownames(cohonen_information), "Codebook rows")
+  df <- cohonen_information[cluster_index, , drop = FALSE]
   df_mat <- as.matrix(sapply(df, as.numeric))
   rownames(df_mat) <- rownames(df)
   p <- pheatmap(df, scale = scale, cluster_rows = cluster_rows,
@@ -1640,7 +1651,7 @@ MBR_process <- function(fcs_files,
 #' @param column_mapping Optional named character vector mapping old channel names to new names.
 #'
 #' @details
-#' selected_rows is matched against existing row names using membership, retaining the INPUT order rather than the order of selected_rows. Missing requested rows are silently omitted. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
+#' Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
 #'
 #' @return
 #' A data frame containing the selected, renamed and transformed rows.
@@ -1658,8 +1669,9 @@ MBR_prepare <- function(bins,
                          transformation = function(x) 10^((4 * x) / 65000),
                          column_mapping = NULL) {
 
-  # Select rows
-  bins <- bins[rownames(bins) %in% selected_rows, , drop = FALSE]
+  # Validate requests but retain the original input row order and spelling.
+  selected_index <- .mbr_cluster_match(selected_rows, rownames(bins), "Bin rows")
+  bins <- bins[seq_len(nrow(bins)) %in% selected_index, , drop = FALSE]
 
   # Convert to dataframe if not already
   bins <- as.data.frame(bins)
@@ -1705,7 +1717,7 @@ MBR_prepare <- function(bins,
 #' @details
 #' dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Events outside scale limits are removed for plot calculations.
 #'
-#' Highlight matching uses paste0("V", dat$classes), requiring uppercase labels such as V1 in selected_rows. Other functions may use lowercase v abundance columns; these conventions are not interchangeable without conversion. bins must have x and y columns and exactly one correctly ordered row per label in selected_rows. No statistical test is performed. This returns a plot without saving or printing it.
+#' Numeric event classes and v/V-prefixed cluster labels are supported. selected_rows matches either prefix case; missing requests and case-ambiguous IDs raise errors. bins must have x and y columns and cluster row names; coordinates are matched to selected_rows regardless of row order or prefix case. No statistical test is performed. This returns a plot without saving or printing it.
 #'
 #' @return
 #' A ggplot object that can be printed or saved with ggplot2::ggsave.
@@ -1750,10 +1762,14 @@ MBR_flow_plot <- function(dat,
     theme_bw() +
     theme(text = element_text(family = theme_family))
 
-  # Add highlighted points if selected_rows is provided
-  if (!is.null(selected_rows) && "classes" %in% colnames(dat)) {
+  # Repeated event classes are valid; only distinct labels must be unambiguous.
+  if (!is.null(selected_rows)) {
+    if (!"classes" %in% colnames(dat)) stop("dat must contain classes to select clusters.")
+    event_ids <- .mbr_event_ids(dat[, "classes"])
+    selected_index <- .mbr_cluster_match(selected_rows, unique(event_ids), "Event classes")
+    selected_ids <- unique(event_ids)[selected_index]
     p <- p +
-      geom_point(data = dat[paste0('V', dat[,"classes"]) %in% selected_rows, ],
+      geom_point(data = dat[event_ids %in% selected_ids, , drop = FALSE],
                  aes_string(x = x, y = y),
                  color = point_color,
                  alpha = point_alpha,
@@ -1762,6 +1778,9 @@ MBR_flow_plot <- function(dat,
 
   # Add bin labels if bins is provided
   if (!is.null(bins) && !is.null(selected_rows)) {
+    # Align coordinates to requested labels, independent of bin row order/case.
+    bin_index <- .mbr_cluster_match(selected_rows, rownames(bins), "Bin rows")
+    bins <- bins[bin_index, , drop = FALSE]
     p <- p +
       annotate('text',
                x = bins[, x],
@@ -1789,7 +1808,7 @@ MBR_flow_plot <- function(dat,
 #' @param ... Additional arguments forwarded to every MBR_flow_plot call.
 #'
 #' @details
-#' plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same uppercase cluster-label and row-order rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
+#' plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same case-insensitive cluster-label matching rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
 #'
 #' @return
 #' The arranged ggpubr plot object.
@@ -1854,7 +1873,7 @@ MBR_plot <- function(dat,
 #' @param rawdata_path Parent directory in which FilteredFCS will be created.
 #'
 #' @details
-#' Selects events using uppercase V-prefixed cluster labels derived from dat$classes, then removes classes from exported channels. Exports the values in dat as supplied, which may already have been transformed by MBR_process; it does not restore raw instrument values. Channel names must match the original flowFrame for parameter metadata matching. Renamed channels can produce unmatched metadata or warnings, and inherited parameter ranges may be inconsistent with transformed values.
+#' Selects events using numeric or v/V-prefixed classes, matching selected_rows in either prefix case, then removes classes from exported channels. Missing requests and case-ambiguous IDs raise errors. Exports the values in dat as supplied, which may already have been transformed by MBR_process; it does not restore raw instrument values. Channel names must match the original flowFrame for parameter metadata matching. Renamed channels can produce unmatched metadata or warnings, and inherited parameter ranges may be inconsistent with transformed values.
 #'
 #' Rebuilds parameter fields and FCS description keys, preserving non-parameter description entries and updating total event and channel counts. Missing required metadata columns are filled with NA with a warning. Biobase and flowCore accessors are qualified by namespace. No event order correspondence to raw data is checked. Test exports by rereading and checking event counts and channels before downstream use.
 #'
@@ -1883,8 +1902,10 @@ MBR_save <- function(fcs_files, dat, selected_rows, file_index = 1, rawdata_path
   target_fcs_filename <- sampleNames(fcs_files)[file_index]
   original_flowframe <- fcs_files[[file_index]]
 
-  # 2. Filter selected events
-  selected_events_data <- dat[paste0('V', dat[,"classes"]) %in% selected_rows, ]
+  # 2. Validate requested clusters before export, then preserve event order.
+  event_ids <- .mbr_event_ids(dat[, "classes"])
+  selected_index <- .mbr_cluster_match(selected_rows, unique(event_ids), "Event classes")
+  selected_events_data <- dat[event_ids %in% unique(event_ids)[selected_index], , drop = FALSE]
   selected_events_data_for_fcs <- selected_events_data %>% dplyr::select(-classes)
 
   # 3. Extract and prepare parameter info

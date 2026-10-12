@@ -5,7 +5,7 @@ The current implementation addresses the requested statistical, alignment, depen
 | Area | Existing behavior and practical consequence |
 | --- | --- |
 | SOM resolution | Grid size follows `m`, but mapping/count levels remain fixed at 2025; `n_hclust` is unused. Keep the default grid when reproducing this workflow and inspect assignments. |
-| Cluster names | Counts use `v` prefixes; flow selection uses `V`; heatmap codebook lookup forces `V`; default SOM codebook rows may be numeric. Convert and align copies explicitly. |
+| Cluster names | Cluster selection accepts `v`/`V` prefixes consistently and preserves input names. Missing requests and ambiguous duplicates raise errors. Default SOM codebook rows may still be numeric; give them v/V-prefixed cluster labels before heatmap lookup. |
 | Empty/small subsets | Several helpers subset without `drop = FALSE`; a single row or channel may lose matrix dimensions. |
 | Count completeness | `count_observations` drops IDs outside its supplied range; `get_counts` omits samples lacking a resolution. Check sums and column names. |
 | PCoA | Three requested axes require adequate distinct samples; negative Bray-Curtis eigenvalues are not corrected and reported percentages include all eigenvalues in their denominator. |

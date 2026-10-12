@@ -315,7 +315,7 @@ stopifnot("scatter" %in% names(x), identical(as.numeric(x$classes), c(1, 2)))
 
 Filters a prototype table by row name, optionally renames channels, and transforms all remaining columns.
 
-selected_rows is matched against existing row names using membership, retaining the INPUT order rather than the order of selected_rows. Missing requested rows are silently omitted. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
+Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
 
 **Result:** A data frame containing the selected, renamed and transformed rows.
 
@@ -333,7 +333,7 @@ Builds a two-channel hexagonal density plot with logarithmic axes, highlighted e
 
 dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Events outside scale limits are removed for plot calculations.
 
-Highlight matching uses paste0("V", dat$classes), requiring uppercase labels such as V1 in selected_rows. Other functions may use lowercase v abundance columns; these conventions are not interchangeable without conversion. bins must have x and y columns and exactly one correctly ordered row per label in selected_rows. No statistical test is performed. This returns a plot without saving or printing it.
+Numeric event classes and v/V-prefixed cluster labels are supported. selected_rows matches either prefix case; missing requests and case-ambiguous IDs raise errors. bins must have x and y columns and cluster row names; coordinates are matched to selected_rows regardless of row order or prefix case. No statistical test is performed. This returns a plot without saving or printing it.
 
 **Result:** A ggplot object that can be printed or saved with ggplot2::ggsave.
 
@@ -350,7 +350,7 @@ print(p)
 
 Calls MBR_flow_plot for each channel pair and arranges the resulting plots with ggpubr.
 
-plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same uppercase cluster-label and row-order rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
+plot_params is a list of lists, each containing x and y channel names. Other entries in a pair are ignored; additional plot options must be passed through ... and apply to ALL panels. selected_rows, bins and dat follow the same case-insensitive cluster-label matching rules as MBR_flow_plot. ncol and nrow control the arrangement and common_legend requests a shared legend. Shared legends do not ensure comparable density scales across channel pairs; each panel computes its own hexagon counts. No file is saved.
 
 **Result:** The arranged ggpubr plot object.
 
@@ -368,7 +368,7 @@ print(p)
 
 Filters processed events by cluster and rebuilds a flowFrame using original FCS parameter metadata.
 
-Selects events using uppercase V-prefixed cluster labels derived from dat$classes, then removes classes from exported channels. Exports the values in dat as supplied, which may already have been transformed by MBR_process; it does not restore raw instrument values. Channel names must match the original flowFrame for parameter metadata matching. Renamed channels can produce unmatched metadata or warnings, and inherited parameter ranges may be inconsistent with transformed values.
+Selects events using numeric or v/V-prefixed classes, matching selected_rows in either prefix case, then removes classes from exported channels. Missing requests and case-ambiguous IDs raise errors. Exports the values in dat as supplied, which may already have been transformed by MBR_process; it does not restore raw instrument values. Channel names must match the original flowFrame for parameter metadata matching. Renamed channels can produce unmatched metadata or warnings, and inherited parameter ranges may be inconsistent with transformed values.
 
 Rebuilds parameter fields and FCS description keys, preserving non-parameter description entries and updating total event and channel counts. Missing required metadata columns are filled with NA with a warning. Biobase and flowCore accessors are qualified by namespace. No event order correspondence to raw data is checked. Test exports by rereading and checking event counts and channels before downstream use.
 

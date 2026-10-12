@@ -21,6 +21,6 @@ Roxygen comments in these scripts are the source for `man/*.Rd`. Regenerate help
 * Gated samples: named list of `list(name = "sample.fcs", data = numeric_event_matrix)`; columns must be identical and ordered consistently between samples.
 * Count helper output: cluster rows (`v1`, `v2`, ...) and sample columns. Transpose before sample-level downstream analyses.
 * Downstream abundances: numeric matrix or data frame with samples in rows and features in columns; sample row names align metadata. Missing IDs produce a positional-alignment warning.
-* Plotting/export labels: uppercase `V1`, `V2`, ...; abundance columns: lowercase `v1`, `v2`, ...; SOM codebook row names may initially be numeric. Make explicit conversions on copies.
+* Cluster matching accepts `v1` and `V1` equivalently in violin, heatmap, bin preparation, flow plotting and export. Input names are preserved; unrelated feature names remain case-sensitive. Missing requests and duplicate or case-ambiguous IDs raise errors. Numeric event classes are supported; codebook rows should have v/V-prefixed cluster labels.
 
 See [statistical interpretation](../docs/statistical-methods.md), [examples and checks](../docs/examples.md), and [known limitations](../docs/implementation-notes.md).

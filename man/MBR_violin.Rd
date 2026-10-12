@@ -45,6 +45,8 @@ Invisible NULL; the plot is printed and saved, rather than returned.
 Draws a violin and box plot for one cluster and annotates a supplied raw or adjusted p-value.
 }
 \details{
+Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
+
 Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 selects the lowercase column v1 and the row v1 of pvalue_data. Metadata rows must match data order. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
 
 A violin is a smoothed density estimate, and the overlaid box plot summarizes the median and interquartile range. The abundance label assumes data already contains proportions. Supply enough colors for all groups. The annotation is positioned at x = 1.5, appropriate for a two-group comparison. Writes violin_cluster_<cluster>_<p>.pdf to an existing directory and prints the plot.

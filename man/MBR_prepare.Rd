@@ -27,7 +27,7 @@ A data frame containing the selected, renamed and transformed rows.
 Filters a prototype table by row name, optionally renames channels, and transforms all remaining columns.
 }
 \details{
-selected_rows is matched against existing row names using membership, retaining the INPUT order rather than the order of selected_rows. Missing requested rows are silently omitted. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
+Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
 }
 \examples{
 bins <- data.frame(FSC = c(10, 20, 30), SSC = c(40, 50, 60),
