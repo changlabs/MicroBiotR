@@ -42,7 +42,7 @@ wilcox uses the unpaired, two-sided Wilcoxon rank-sum test for two groups. It co
 
 BH and fdr both request Benjamini-Hochberg adjustment, controlling false discovery rate under its dependence assumptions. bonferroni controls family-wise error through a more conservative adjustment. none, the default, leaves p-values unadjusted. Selection uses p.adj < cutoff, strictly excluding equality. Feature-wise tests on proportions remain affected by compositional dependence.
 
-Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
+Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Constant features are skipped with one summary warning and retain NA p-values. Other failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
 }
 \examples{
 set.seed(42)

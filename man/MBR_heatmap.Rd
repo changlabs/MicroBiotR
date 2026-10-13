@@ -53,7 +53,7 @@ Selects codebook rows using feature column names and renders a configurable phea
 \details{
 Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
 
-Only the column names of data select clusters; its abundance values are not plotted. Both v1 and V1 are converted to V1 for lookup, so cohonen_information must have matching UPPERCASE V-prefixed row names. MBR_som's codebook normally has numeric row names; adapt a copy before passing it here. Missing matches yield missing rows.
+Only the column names of data select clusters; its abundance values are not plotted. Cluster labels such as v1 and V1 match either prefix case in the codebook. The default SOM workflow produces V-prefixed codebook row names; codebooks imported from other sources need matching v/V-prefixed labels. Missing or ambiguous matches raise errors.
 
 The plotted matrix contains prototype channel values. Row scaling standardizes channels within each selected node; column scaling standardizes nodes within each channel; none preserves input units. These different choices change the interpretation of color. Constant rows or columns may fail when scaled. Optional clustering uses pheatmap defaults; it does not alter the package's original SOM assignments. A numeric conversion df_mat is computed but the original subset df is actually plotted. The argument boarder_color is intentionally spelled as in the implementation. Writes heatmap.pdf and draws the plot; out_path must exist.
 }

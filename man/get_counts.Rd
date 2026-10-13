@@ -16,7 +16,7 @@ A named list of numeric cluster-by-sample matrices, one per available count reso
 Collects count resolutions across samples, aligns cluster rows, and combines count columns.
 }
 \details{
-data is a named list of sample lists with counts produced by count_observations. For each resolution, samples lacking it are omitted; they do not get a zero column. Cluster IDs are the numeric row names of per-sample count matrices, sorted numerically. Missing cluster rows in a included sample are filled with zeros. Each input count matrix is treated as a single column. Result row names are lowercase v-prefixed IDs and column names come from outer sample-list names, not data$name. This establishes the abundance-column convention used by MBR_violin after transposing. No normalization or hypothesis test is performed.
+data is a named list of sample lists with counts produced by count_observations. For each resolution, samples lacking it are omitted; they do not get a zero column. Cluster IDs are the numeric row names of per-sample count matrices, sorted numerically. Missing cluster rows in an included sample are filled with zeros. Each input count matrix is treated as a single column. Result row names are lowercase v-prefixed IDs and column names come from outer sample-list names, not data$name. This establishes the abundance-column convention used by MBR_violin after transposing. No normalization or hypothesis test is performed.
 }
 \examples{
 a <- count_observations(list(name = "A", classes = c(1, 1, 3)), "4")

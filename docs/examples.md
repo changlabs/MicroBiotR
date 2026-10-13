@@ -27,6 +27,10 @@ example("MBR_reclustering", package = "MicroBiotR")
 
 Every package function has an example with `stopifnot` checks where useful. Examples use `tempfile` output directories and synthetic values, not biological evidence. They may assign documented global objects, print figures, change RNG state and leave temporary output files. Execute them in a disposable R session if you want isolation.
 
+## Downloadable real-data tutorial
+
+The [R Notebook](../tutorials/MicroBiotR-tutorial.Rmd) runs the README analyses without copying code chunks. See [the notebook guide](../tutorials/README.md) for workflow selection, rendering, data downloads, and cached SOM outputs. Synthetic help examples below are separate from the real-data notebook.
+
 ## Example categories
 
 * Ordinary examples use small generated objects, with no input-file prerequisite. Run with `example("MBR_stat", package = "MicroBiotR")` and inspect exported CSV files and global result tables.
@@ -56,8 +60,8 @@ R CMD build --no-build-vignettes .
 R CMD check --no-manual MicroBiotR_1.1.1.tar.gz
 ```
 
-Keep build/check outputs outside the repository when possible. Inspect remaining package-check warnings described in the validation results.
+Keep build/check outputs outside the repository when possible. The current validated checkout completes with Status: OK; consult the dated validation results for tested scope.
 
 ## Regression checks
 
-Run `Rscript tests/regression.R` after installation. These checks cover the requested behavior fixes with synthetic inputs; see [validation results](validation-results.md) for test scope and remaining limitations.
+Run `Rscript tests/regression.R`, `Rscript tests/cluster-labels.R`, and `Rscript tests/tutorial-warnings.R` after installation. These checks cover the requested behavior fixes with synthetic inputs; see [validation results](validation-results.md) for test scope and remaining limitations.

@@ -48,12 +48,13 @@ e$get_counts <- function(...) list(matrix(c(0, 2, 0, 3), nrow = 2,
                               dimnames = list(c('v1','v2'), c('keep','other'))))
 e$flowFrame <- function(...) stop('export sentinel')
 messages <- character()
-withCallingHandlers(expect_error(e$MBR_som(list(keep = fcs$keep, other = fcs$keep),
+som_output <- capture.output(withCallingHandlers(expect_error(e$MBR_som(list(keep = fcs$keep, other = fcs$keep),
                                          out_path = folder)),
                     warning = function(w) {
                       messages <<- c(messages, conditionMessage(w))
                       invokeRestart('muffleWarning')
-                    })
+                    }))
+stopifnot(any(grepl('Total clusters: 2025', som_output, fixed = TRUE)))
 stopifnot(any(grepl('1 clusters are below', messages, fixed = TRUE)))
 # Real RF resampling and independent evaluation, without attached tidyr/Biobase.
 set.seed(16)

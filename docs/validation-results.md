@@ -1,8 +1,14 @@
 # Validation results
 
+## Package-check cleanup on 13 October 2026
+
+After the tutorial and package-check repairs, `R CMD check --no-manual --no-build-vignettes` completes with **0 errors, 0 warnings and 0 notes (Status: OK)** on R 4.5.2. All three test scripts (`regression.R`, `cluster-labels.R`, `tutorial-warnings.R`) pass. The earlier non-ASCII, standalone-gating help, DESCRIPTION, backend import and namespace/global-binding findings below are resolved. See [the updated tutorial test report](tutorial-local-test-report.md) for repairs, actual example reruns, and the remaining upstream linkET runtime deprecations.
+
+## Historical validation on 8 October 2026
+
 Checked on 8 October 2026 with R 4.5.2 and the installed dependency versions.
 
-## Requested repairs
+### Requested repairs
 
 The regression suite in `tests/regression.R` passes. It verifies valid p-values with tied observations, explicit missing results for failed tests, invalid test-name rejection, numeric matrix support, shuffled metadata alignment and mismatched-ID rejection. It also exercises consistent positive-class probabilities, sample-level averaging of repeated predictions, real random forest cross-validation and independent test evaluation, and rejection of overlapping training/test IDs.
 
@@ -10,7 +16,7 @@ Mocked SOM helpers verify that low-event samples never enter pooling or training
 
 The FCS export algorithm is identical to the baseline after accounting for explicit namespace qualification of dependency accessors. The fixed 2025 SOM count levels and unused n_hclust argument remain unchanged, as requested.
 
-## Packaging and help
+### Packaging and help
 
 Package installation and source build succeed. All installed help files parse and pass Rd syntax checks. `git diff --check` passes.
 
@@ -24,7 +30,7 @@ Package installation and source build succeed. All installed help files parse an
 
 Repository index queries were unavailable in the sandbox. Installed dependencies were sufficient for the check; this run does not establish current remote package availability.
 
-## Interpretation limits
+### Interpretation limits
 
 Cross-validation diagnostics can remain optimistic after model tuning or prior feature selection. Independent test tables must contain samples excluded from those steps and from estimated preprocessing; the functions reject shared meaningful sample IDs but cannot detect a repeated subject given another identifier.
 

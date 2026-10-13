@@ -52,7 +52,7 @@ The wrapper sets the random seed to 2025. Row-aligned numeric features and a met
 
 Random forests combine trees fitted to bootstrap samples and random predictor subsets. RFE ranks predictors and compares candidate subsets using resampling. Importance can be unstable when predictors are correlated. Effect-size plots use log10(value + 1), despite an axis label saying log10(abundance). Cohen's d is a standardized difference in group means; its sign depends on group ordering and ref_group. The displayed 95 percent intervals and effects are calculated after selecting features on these same data, so they are exploratory rather than selection-adjusted inference. Use two groups for this workflow and keep feature selection inside an outer resampling loop when evaluating predictive performance.
 
-Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features using superassignment, normally into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
+Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features explicitly into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
 }
 \examples{
 \dontrun{

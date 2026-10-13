@@ -13,7 +13,8 @@ These functions are not installed or exported by MicroBiotR; they exist only
 when their script definitions are evaluated in an analysis session.
 Sourcing the complete script immediately runs the analysis and writes files.
 }
-\usage{
+\section{Standalone helper signatures}{
+\preformatted{
 gate_debris(data)
 plot_gate_debr(data, gate, path = tmp_path)
 gate_dna(data, channels = c("FSC PAR", "Hoechst Red"))
@@ -21,7 +22,9 @@ plot_gate_dna(data, gate, path = tmp_path)
 plot_gating(x, nodes = gs_get_pop_paths(ig_gs))
 get_sc_gated(data, node, channels = NULL)
 }
-\arguments{
+}
+\section{Standalone helper arguments}{
+\describe{
 \item{data}{A compatible flowWorkspace gating object for gating/plotting,
 or one gating hierarchy for extraction. Unused by gate_dna.}
 \item{gate}{Population name used as the ggcyto subset, for example root
@@ -34,6 +37,7 @@ For get_sc_gated, optional channel names to retain; NULL retains all.}
 \item{nodes}{Unused argument; does not select populations. Its default
 references the script's ig_gs object.}
 \item{node}{Population name from which events are extracted, such as DNA.}
+}
 }
 \details{
 The script attaches flowCore, flowWorkspace, openCyto, ggcyto, ggplot2

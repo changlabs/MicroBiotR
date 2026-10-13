@@ -1,0 +1,893 @@
+---
+title: "MicroBiotR: runnable tutorial"
+author: "MicroBiotR developers"
+output:
+  html_notebook:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    df_print: paged
+    code_folding: show
+    self_contained: true
+    mathjax: null
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    theme: flatly
+    highlight: tango
+    df_print: paged
+    code_folding: show
+    self_contained: true
+    mathjax: null
+params:
+  workflow: "16s"
+  data_dir: "data"
+  output_dir: "results"
+  download_data: false
+  execute: true
+  reuse_som: false
+---
+
+```{css custom-styles, echo=FALSE, eval=knitr::is_html_output()}
+/* Custom styling for improved readability */
+body {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  color: #2c3e50;
+  margin-top: 1.5em;
+}
+
+/* Code and code-output font size is pinned explicitly (rather than left to
+   inherit from body) so that raising the prose size above does not also
+   enlarge code blocks, inline code, or printed console output -- those stay
+   at the reference notebook's 14px regardless of any future prose-size
+   changes. */
+code {
+  background-color: #F2F2F2;
+  color: #2c3e50;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+pre, pre code {
+  font-size: 14px;
+}
+
+.alert-info {
+
+  background-color: #2c3e50;
+  color: #ffffff;
+  border-left: 4px solid #f39c12;
+  padding: 12px;
+  margin: 15px 0;
+}
+
+.alert-warning {
+  background-color: #2c3e50;
+  color: #ffffff;
+  border-left: 4px solid #e74c3c;
+  padding: 12px;
+  margin: 15px 0;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  color: #155724;
+  border-left: 4px solid #28a745;
+  padding: 12px;
+  margin: 15px 0;
+}
+
+/* Table cells wrap long content (long inline code, sentences) instead of
+   overflowing or forcing horizontal scroll. */
+table {
+  width: 100%;
+}
+
+th, td {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+```
+
+# Introduction
+
+This notebook contains all 15 analysis steps from the repository README.
+The workflows are independent: **cytometry** runs steps 1–13, **16s** runs
+step 14, and **rna** runs step 15. Choose **all** to run all three.
+
+<div class="alert alert-info">
+
+The default is the smaller **16S** example. Choose your workflow in the YAML parameters before execution.
+
+</div>
+
+<div class="alert alert-warning">
+
+Results are exploratory. Feature selection and evaluation on the same samples do not establish independent predictive performance. Full cytometry training uses the large example dataset and can take substantial time and memory.
+
+</div>
+
+1. Install MicroBiotR and its dependencies using the repository README.
+   Install `rmarkdown`, `knitr`, and `tidyverse` as well. Cytometry density
+   plots also require `hexbin`. RStudio supplies Pandoc for HTML rendering.
+2. Save this `.Rmd` in a new analysis folder and open it in RStudio.
+3. Set `workflow`, `data_dir`, and `output_dir` in the YAML header above.
+   Relative paths resolve from the notebook's folder when knitting.
+4. Put the matching files from [Zenodo](https://zenodo.org/records/20286378)
+   in `data_dir`, or set `download_data: true` to download missing files.
+   The cytometry dataset is approximately 539 MB and training is expensive.
+5. Select **Run All** to execute chunks interactively. **Preview** shows a
+   notebook with saved chunk outputs. To execute the entire document and
+   create a standalone HTML report, use **Knit to HTML** or:
+
+```r
+rmarkdown::render("MicroBiotR-tutorial.Rmd", output_format = "html_document")
+```
+
+Override the YAML parameters when rendering, for example:
+
+```r
+rmarkdown::render("MicroBiotR-tutorial.Rmd", output_format = "html_document",
+                  params = list(workflow = "rna", data_dir = "data",
+                                output_dir = "results"))
+```
+
+Set `execute: false` to render the explanatory text and code without running
+analyses or downloading data. Set `reuse_som: true` for cytometry only when
+`results/cytometry/SOM.csv`, `cluster_information.csv`, and `MappedFCS/`
+already contain outputs from step 1 for the same input data. Output filenames
+are reused on subsequent runs; use a new `output_dir` to keep runs separate.
+No packages are installed or upgraded by this notebook.
+
+------------------------------------------------------------------------
+
+# Environment Setup
+
+```{r setup, include=FALSE}
+# In interactive notebook execution, read defaults from this file's YAML.
+# rmarkdown::render() supplies params, including any requested overrides.
+if (!exists("params", inherits = FALSE)) {
+  params <- rmarkdown::yaml_front_matter("MicroBiotR-tutorial.Rmd")$params
+}
+stopifnot(params$workflow %in% c("16s", "rna", "cytometry", "all"))
+run_flow <- isTRUE(params$execute) && params$workflow %in% c("cytometry", "all")
+run_16s <- isTRUE(params$execute) && params$workflow %in% c("16s", "all")
+run_rna <- isTRUE(params$execute) && params$workflow %in% c("rna", "all")
+knitr::opts_chunk$set(echo = TRUE, warning = TRUE, message = TRUE,
+                      error = FALSE, fig.width = 8, fig.height = 6)
+data_dir <- normalizePath(params$data_dir, mustWork = FALSE)
+output_root <- normalizePath(params$output_dir, mustWork = FALSE)
+flow_out <- file.path(output_root, "cytometry")
+bac_out <- file.path(output_root, "16s")
+rna_out <- file.path(output_root, "rna")
+if (isTRUE(params$execute)) {
+  packages <- c("MicroBiotR", "linkET", "Biobase", "flowCore", "tidyverse")
+  if (run_flow) packages <- c(packages, "hexbin")
+  missing <- packages[!vapply(packages, requireNamespace, quietly = TRUE, FUN.VALUE = logical(1))]
+  if (length(missing)) stop("Install the required packages first: ", paste(missing, collapse = ", "))
+  library(MicroBiotR)
+  library(linkET)
+  library(Biobase)
+  library(flowCore)
+  library(tidyverse)
+  for (path in c(data_dir, flow_out[run_flow], bac_out[run_16s], rna_out[run_rna])) {
+    dir.create(path, recursive = TRUE, showWarnings = FALSE)
+  }
+  set.seed(2025)
+}
+```
+
+------------------------------------------------------------------------
+
+# Configuration
+
+```{r run-settings, eval=isTRUE(params$execute)}
+data.frame(workflow = params$workflow,
+           reused_som = run_flow && isTRUE(params$reuse_som),
+           MicroBiotR = as.character(packageVersion("MicroBiotR")))
+```
+
+------------------------------------------------------------------------
+
+# Input Data
+
+| Workflow | Data | Metadata |
+| --- | --- | --- |
+| Cytometry | `data_gated.save` | `meta.txt` |
+| 16S | `bac_data.txt` | `bac_meta.txt` |
+| RNA | `rnaibd.csv` | `meta_rna.txt` |
+
+Files are checked against the record's published MD5 checksums before use.
+Existing files are never automatically replaced if their checksums differ.
+
+```{r example-files, eval=isTRUE(params$execute)}
+expected_md5 <- c(
+  "meta_rna.txt" = "857b837d31314ce1e82a99c901c948b8",
+  "data_gated.save" = "7045a1ed0405737eae874acd58d74f0d",
+  "meta.txt" = "86e78fdd5d1661e1d01ad9029bfa8509",
+  "bac_meta.txt" = "9acedac7d5c1bcd312dce6094779ea60",
+  "bac_data.txt" = "6d3660887072b4f6c70d5bd7b445567a",
+  "rnaibd.csv" = "c14e65cdbcbe84cd1e5bea49af2ee615"
+)
+required_files <- c(
+  if (run_flow) c("data_gated.save", "meta.txt"),
+  if (run_16s) c("bac_data.txt", "bac_meta.txt"),
+  if (run_rna) c("rnaibd.csv", "meta_rna.txt")
+)
+for (name in required_files) {
+  path <- file.path(data_dir, name)
+  if (!file.exists(path)) {
+    if (!isTRUE(params$download_data)) {
+      stop("Missing example file: ", path, ". Download it from Zenodo or set download_data: true.")
+    }
+    previous_timeout <- getOption("timeout")
+    options(timeout = max(1800, previous_timeout))
+    tryCatch({
+      url <- paste0("https://zenodo.org/records/20286378/files/", name, "?download=1")
+      utils::download.file(url, path, mode = "wb", method = "libcurl")
+    }, finally = options(timeout = previous_timeout))
+  }
+  if (!identical(unname(tools::md5sum(path)), unname(expected_md5[name]))) {
+    stop("Checksum mismatch for ", path, ". Replace the incomplete or changed file with the Zenodo example.")
+  }
+}
+data.frame(file = required_files, verified = TRUE)
+```
+
+------------------------------------------------------------------------
+
+# Cytometry workflow (steps 1–13)
+
+These chunks run when `workflow` is `cytometry` or `all`. Study-specific cluster
+IDs and channel labels below refer to the supplied BD Influx example. Confirm
+sample IDs and channel scales when adapting them to another experiment.
+
+## Step 1: SOM analysis
+
+A [self-organizing map (SOM)](https://cran.r-project.org/package=kohonen) represents similar flow events with shared multichannel prototypes. Mapping each sample to the same prototypes creates comparable cluster abundance profiles. Channel scales influence the fit, and training can require substantial time and memory.
+
+```{r step-01, eval=run_flow}
+meta <- read.delim(file.path(data_dir, "meta.txt"), header = TRUE, row.names = 1)
+set.seed(2025)
+if (isTRUE(params$reuse_som)) {
+  count_table <- read.csv(file.path(flow_out, "SOM.csv"), row.names = 1, check.names = FALSE)
+  cohonen_information <- read.csv(file.path(flow_out, "cluster_information.csv"),
+                                   row.names = 1, check.names = FALSE)
+  if (!dir.exists(file.path(flow_out, "MappedFCS"))) stop("reuse_som requires the mapped FCS directory.")
+} else {
+  load(file.path(data_dir, "data_gated.save"))
+  MBR_som(fl_data_ig, out_path = flow_out)
+}
+# Check sample identity before downstream tests; ordering is handled by MicroBiotR.
+stopifnot(setequal(rownames(count_table), rownames(meta)),
+          ncol(count_table) == 2025L, all(abs(rowSums(count_table) - 1) < 1e-8))
+```
+
+
+## Step 2: Statistics
+
+Compare feature abundances between groups using a [Wilcoxon rank-sum test](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/wilcox.test.html). [False discovery rate (FDR)](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html) adjustment accounts for testing many features. Interpret associations at the biological sample level and consider the compositional nature of relative abundances.
+
+```{r step-02, eval=run_flow}
+# Test options are 'wilcox', 'kruskal', 'anova', 't.test' or 'ttest'.
+# correction could be one of 'none', 'fdr', 'bonferroni' ,'BH'
+MBR_stat(data = count_table, group_col = 'Group', meta_data = meta,
+       # Use the two-sided Wilcoxon group test.
+       test_type = 'wilcox', out_path = flow_out,
+       # Set whether feature-wise p-values are adjusted for multiple tests.
+       correction = 'fdr', cutoff = 0.001)
+```
+
+
+## Step 3: Circular heatmap
+
+A circular heatmap summarizes average abundance in each group. The difference track helps identify clusters with contrasting group means; it is a descriptive display rather than an additional hypothesis test.
+
+```{r step-03, eval=run_flow}
+# Generate a circular plot to visualize significant features across groups
+MBR_circle(
+  # dataframe containing features
+  data = significant_data,
+  # column name in metadata containing group labels
+  group_col = 'Group',
+  # matched sample metadata data frame
+  meta_data = meta,
+  # width of the output figure
+  width = 16,
+  # height of the output figure
+  height = 16,
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out
+)
+```
+
+
+
+## Step 4: Cluster abundance violin plot
+
+Inspect how one cluster is distributed across samples in each group. The violin shows distribution shape, the box plot summarizes the median and interquartile range, and the annotation displays the previously calculated adjusted p-value.
+
+```{r step-04, eval=run_flow}
+# Generate a violin plot for a selected feature/cluster
+MBR_violin(
+  # dataframe containing features
+  data = significant_data,
+  # matched sample metadata data frame
+  meta_data = meta,
+  # column name in metadata containing group labels
+  group_col = "Group",
+  # statistical test result dataframe containing p-values
+  pvalue_data = pvalue_data,
+  # column name containing adjusted p-values or raw p-values (p.value)
+  p = "p.adj",
+  # colors used for group visualization
+  colors = c('#FFADAD', '#DEDAF4'),
+  # selected feature/cluster ID for plotting
+  cluster = 1948,
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out
+)
+```
+
+
+
+## Step 5: Beta diversity
+
+[Bray-Curtis dissimilarity](https://vegandevs.github.io/vegan/reference/vegdist.html) compares sample abundance profiles, while [PCoA](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cmdscale.html) displays their main differences. [PERMANOVA](https://vegandevs.github.io/vegan/reference/adonis.html) tests group-associated variation in the full distance matrix; assess within-group dispersion when interpreting separation.
+
+```{r step-05, eval=run_flow}
+# The example uses group-selected significant_data; resulting group separation
+# is exploratory.
+# Use an unselected abundance table when testing an overall group-profile
+# hypothesis.
+
+# Perform beta diversity analysis and generate a PCoA plot
+# `test` should be one of 'wilcox', 'ttest', 'kruskal', or 'anova'
+MBR_beta(
+  # dataframe containing features
+  significant_data,
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out,
+  # statistical test method
+  test = 'wilcox',
+  # matched sample metadata data frame
+  meta_data = meta,
+  # column name in metadata containing group labels
+  group_name = 'Group',
+  # colors used for group visualization
+  colors = c('#FFADAD', '#DEDAF4')
+)
+```
+
+
+
+## Step 6: Feature selection
+
+[Recursive feature elimination](https://topepo.github.io/caret/recursive-feature-elimination.html) compares predictor subsets through cross-validation. Importance scores and effect-size plots help explore selected features. Independent predictive evaluation requires feature selection inside an outer validation design.
+
+```{r step-06, eval=run_flow}
+# Choose rfe_size according to the number of available features.
+# Cohen's d plots use log10(value + 1); effect estimates are exploratory after
+# selection.
+
+# Perform recursive feature elimination (RFE) for feature selection
+# Random seeds are internally fixed for reproducibility.
+MBR_fs(
+  # dataframe containing features
+  significant_data,
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out,
+  # number of folds for cross-validation
+  nfolds_cv = 5,
+  # Largest requested subset size; caret also evaluates the full set.
+  rfe_size = 199,
+  # Number of selected features displayed in the importance plot.
+  top_n_features = 10,
+  # column name in metadata containing group labels
+  group_name = 'Group',
+  # metadata dataframe corresponding to samples
+  meta_data = meta,
+  # reference/control group used for comparison
+  ref_group = 'CD',
+  # colors used for visualization plots
+  colors = c('#FFADAD', '#DEDAF4')
+)
+```
+
+
+
+
+
+## Step 7: SOM channel heatmap
+
+Compare the scatter and fluorescence profiles represented by selected SOM nodes. [pheatmap](https://cran.r-project.org/package=pheatmap) displays these channel patterns, with row scaling emphasizing relative values within each node.
+
+```{r step-07, eval=run_flow}
+# Plot all features retained by feature selection; the number can vary.
+# Codebook row names must match feature identifiers; v/V prefix case is accepted.
+
+# Generate a heatmap for selected features
+MBR_heatmap(
+  # selected feature matrix for visualization
+  data = MBR_selected_features,
+  # SOM prototype channel values
+  cohonen_information = cohonen_information,
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out,
+  # scaling method applied to rows
+  scale = 'row',
+  # whether to cluster columns
+  cluster_cols = FALSE,
+  # whether to cluster rows
+  cluster_rows = TRUE,
+  # whether to display numeric values in the heatmap
+  display_numbers = FALSE
+)
+```
+
+
+
+## Step 8: Metadata associations
+
+A [Mantel test](https://vegandevs.github.io/vegan/reference/mantel.html) compares sample-distance patterns, while the correlation heatmap summarizes relationships among microbial features. [linkET](https://github.com/Hy4m/linkET) combines these summaries in one display. Treat the associations as descriptive.
+
+```{r step-08, eval=run_flow}
+# Plot up to ten available selected features.
+# Check that chosen metadata variables are numeric, finite and appropriately
+# scaled.
+
+# Perform Mantel correlation analysis between selected features and metadata
+# variables
+MBR_mantel(
+  # selected feature matrix
+  data = MBR_selected_features[, seq_len(min(10, ncol(MBR_selected_features))), drop = FALSE],
+  # matched sample metadata data frame
+  meta_data = meta,
+  # clinical variable columns
+  clinical_cols = c("Clinical1", "Clinical2"),
+  # demographic variable columns
+  demographic_cols = c("Demographic1", "Demographic2"),
+  # Assign readable labels to the metadata blocks.
+  spec_select_names = list(
+    # Label the clinical metadata block.
+    A = "Clinical",
+    # Label the demographic metadata block.
+    B = "Demographic"
+  # labels used for grouped variable categories
+  ),
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out,
+  # width of the output figure
+  width = 6,
+  # height of the output figure
+  height = 6
+)
+```
+
+
+
+## Step 9: Random forest ROC diagnostic
+
+The receiver operating characteristic (ROC) curve shows sensitivity across false-positive rates, and area under the curve (AUC) summarizes discrimination. See the [pROC documentation](https://cran.r-project.org/package=pROC) for ROC estimation. This diagnostic uses held-out cross-validation probabilities averaged once per sample. Tuning and prior feature selection can still make the estimates optimistic; supply `test_data` and `test_meta_data` from unused samples for independent evaluation.
+
+```{r step-09, eval=run_flow}
+MBR_ml(
+  # feature table
+  data = MBR_selected_features,
+  # matched sample metadata data frame
+  meta_data = meta,
+  # column name in metadata containing group labels
+  group_name = 'Group',
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out,
+  # reference group (e.g., "CD" or "HC")
+  reference_level = 'CD',
+  # width of the output plot PDF
+  width = 6,
+  # height of the output plot PDF
+  height = 6,
+  # resampling method
+  method = 'repeatedcv',
+  # number of folds
+  number = 5,
+  # number of repeats
+  repeats = 2
+)
+```
+
+
+
+## Step 10: Confusion matrix
+
+Inspect correctly classified samples and the types of classification error. The [random forest](https://cran.r-project.org/package=randomForest) confusion display uses held-out cross-validation predictions from a separately fitted model, or an independent test set supplied with `test_data` and `test_meta_data`. Group sizes matter when interpreting the counts.
+
+```{r step-10, eval=run_flow}
+# Generate a confusion matrix and classification performance summary
+MBR_conf(
+  # feature table used for model evaluation
+  data = MBR_selected_features,
+  # matched sample metadata data frame
+  meta_data = meta,
+  # column name in metadata containing group labels
+  group_name = 'Group',
+  # reference group (e.g., "CD" or "HC")
+  reference_level = 'CD',
+  # Write outputs to this workflow's output folder.
+  out_path = flow_out
+)
+```
+
+
+
+## Step 11: Reclustering
+
+Group SOM prototypes into coarser signal profiles using standardized measurements and [Ward hierarchical clustering](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html). Cluster labels summarize similarity; they do not automatically update the mapped event assignments.
+
+```{r step-11, eval=run_flow}
+MBR_reclustering(data = cohonen_information, num_clusters = 1000)
+```
+
+
+## Step 12: Flow cytometry channel plots
+
+Locate selected SOM populations in scatter and fluorescence projections. The [flowCore utilities](https://www.bioconductor.org/packages/release/bioc/html/flowCore.html) read the mapped FCS files, while density backgrounds and prototype labels show where selected populations lie. Use transformations appropriate for the acquisition scale.
+
+```{r step-12, eval=run_flow}
+# file_index = 1 selects the first mapped FCS sample.
+# Prototype row names must match selected_rows; annotation coordinates are
+# aligned by cluster ID.
+
+# Define the directory containing 'FCS files generated from SOM processing'
+# Locate mapped FCS files produced by SOM analysis.
+rawdata_path <- file.path(flow_out, "MappedFCS")
+
+# Read the mapped FCS files into a flowSet.
+fcs_files <- MBR_read(rawdata_path)
+
+# Define selected SOM cluster IDs to visualize
+# Choose the SOM cluster labels to inspect.
+selected_rows <- c(
+  'V1122','V1902','V1949','V978','V77','V1813','V1812','V1946','V205','V296'
+)
+
+
+# Define column name mappings between FCS channels and marker names
+# Map acquisition-channel names to plotting labels.
+column_mapping <- c(
+  "FSC PAR"         = "FSC.PAR",
+  "SSC"             = "SSC",
+  "Hoechst.Red.DNA" = "Hoechst.Red",
+  "Hoechst.Red"     = "Hoechst.Red",
+  "Hoechst Red.DNA" = "Hoechst.Red",
+  "FITC.hIgA2"      = "FITC",
+  "FITC"            = "FITC",
+  "APC.hIgA1"       = "APC",
+  "APC"             = "APC",
+  "Pe-TR.hIgG"      = "Pe.TR",
+  "Pe.TR.hIgG"      = "Pe.TR",
+  "Pe.TR"           = "Pe.TR",
+  "BV650.hIgM"      = "BV650",
+  "BV650"           = "BV650"
+)
+
+# Define marker/channel combinations for flow cytometry visualization
+# Define the four scatter and fluorescence channel pairs.
+plot_params <- list(
+  list(x = "FSC.PAR", y = "SSC"),
+  list(x = "FSC.PAR", y = "Hoechst.Red"),
+  list(x = "FITC", y = "APC"),
+  list(x = "Pe.TR", y = "BV650")
+)
+
+# Process a selected FCS file and apply signal transformation
+# Prepare the selected FCS sample for channel plotting.
+dat <- MBR_process(
+  fcs_files,
+  # Choose this position in the input FCS sample list.
+  file_index = 1,
+  # transformation function for scaling
+  transformation = function(x) 10^((4 * x) / 65000),
+  # defined channel mapping
+  column_mapping = column_mapping
+)
+
+# Prepare SOM clusters for downstream visualization
+# Prepare matching SOM prototypes for annotation.
+bins <- MBR_prepare(
+  cohonen_information,
+  # selected SOM clusters
+  selected_rows = selected_rows,
+  # transformation function for scaling
+  transformation = function(x) 10^((4 * x) / 65000),
+  # defined channel mapping
+  column_mapping = column_mapping
+)
+
+# Generate flow cytometry plots for selected channels and populations
+# Create the arranged flow-density plots.
+plots <- MBR_plot(
+  # processed flow cytometry data
+  dat = dat,
+  # processed SOM cluster bins
+  bins = bins,
+  # marker/channel combinations for plotting
+  plot_params = plot_params,
+  # selected SOM clusters
+  selected_rows = selected_rows
+)
+
+# Display generated plots
+# Display the four-panel channel-density plot.
+print(plots)
+```
+
+
+
+## Step 13: Export selected populations
+
+Save selected events for inspection in flow cytometry software. Export writes the supplied event values, so consider whether you want transformed or stored acquisition-scale values and retain channel names compatible with the source metadata.
+
+```{r step-13, eval=run_flow}
+# Use sample 1 consistently for processing and export metadata.
+# Prepare acquisition-scale events with their original channel names.
+export_dat <- MBR_process(fcs_files, file_index = 1, transformation = identity)
+
+# Save selected gated populations/clusters as a new FCS file
+MBR_save(
+  # list of input FCS files
+  fcs_files = fcs_files,
+  # acquisition-scale events from the same source sample
+  dat = export_dat,
+  # selected clusters to export
+  selected_rows = c("V9", "V10"),
+  # Choose this position in the input FCS sample list.
+  file_index = 1,
+  # directory containing raw FCS files
+  rawdata_path = rawdata_path
+)
+```
+
+
+------------------------------------------------------------------------
+
+# 16S workflow (step 14)
+
+This chunk runs when `workflow` is `16s` or `all`. Its outputs use a separate folder.
+
+## Step 14: 16S rRNA gene sequencing
+
+Compare 16S feature abundances between CD and HC and explore informative taxa with feature selection and classification. Ensure metadata matches the transposed sample order. This sample-level workflow is exploratory rather than a specialized sequencing count model.
+
+```{r step-14, eval=run_16s}
+# The feature table has taxa in rows and samples in columns.
+# Use meta_final, matched to the transposed feature-table sample IDs.
+# correction = "none" leaves p-values unadjusted.
+
+# Pre-processing
+# Load metadata and feature abundance table
+# Read the matched 16S sample metadata.
+meta_16s <- read.delim(
+  # Read this file from the configured data folder.
+  file.path(data_dir, "bac_meta.txt"),
+  # Use the first file row as column headings.
+  header = TRUE,
+  # Use the first file column as row identifiers.
+  row.names = 1
+)
+# Read the taxa-by-sample feature table.
+count_table_16s <- read.delim(
+  # Read this file from the configured data folder.
+  file.path(data_dir, "bac_data.txt"),
+  # Use the first file row as column headings.
+  header = TRUE,
+  # Use the first file column as row identifiers.
+  row.names = 1
+)
+
+# This operation filters sample columns with zero totals, not taxon rows.
+# Calculate totals for the sample columns of the imported 16S table.
+col_sums <- colSums(count_table_16s)
+# Retain sample columns with positive totals.
+count_table_filtered <- count_table_16s[, col_sums > 0]
+
+# Transpose the count table so that samples are rows and taxa are columns
+# Transpose the feature table to samples in rows.
+count_t <- as.data.frame(t(count_table_filtered))
+
+# Reorder metadata to match the sample order in the feature table
+# Reorder metadata rows to match the transposed sample identifiers.
+meta_final <- meta_16s[rownames(count_t), , drop = FALSE]
+
+
+
+# Application of MicroBiotR
+MBR_stat(
+  # feature abundance table
+  data = count_t,
+  # column name in metadata containing group labels
+  group_col = 'Group',
+  # matched sample metadata data frame
+  meta_data = meta_final,
+  # statistical test method
+  test_type = 'wilcox',
+  # Write outputs to this workflow's output folder.
+  out_path = bac_out,
+  # Set whether feature-wise p-values are adjusted for multiple tests.
+  correction = 'none',
+  # Set the feature-selection threshold for the chosen p-value column.
+  cutoff = 0.1
+)
+
+MBR_fs(
+  # input dataframe containing significant features
+  significant_data,
+  # Write outputs to this workflow's output folder.
+  out_path = bac_out,
+  # number of folds for cross-validation
+  nfolds_cv = 5,
+  # Largest requested subset size; caret also evaluates the full set.
+  rfe_size = 125,
+  # Number of selected features displayed in the importance plot.
+  top_n_features = 10,
+  # column name in metadata containing class/group labels
+  group_name = 'Group',
+  # matched sample metadata data frame
+  meta_data = meta_final,
+  # reference/control group used for comparison
+  ref_group = 'CD',
+  # colors used for visualization plots
+  colors = c('#FFADAD', '#DEDAF4')
+)
+
+MBR_ml(
+  # feature table
+  data = MBR_selected_features,
+  # matched sample metadata data frame
+  meta_data = meta_final,
+  # column name in metadata containing group labels
+  group_name = 'Group',
+  # Write outputs to this workflow's output folder.
+  out_path = bac_out,
+  # reference group
+  reference_level = 'CD',
+  # width of the output plot PDF
+  width = 6,
+  # height of the output plot PDF
+  height = 6,
+  # resampling method
+  method = 'repeatedcv',
+  # number of folds
+  number = 5,
+  # number of repeats
+  repeats = 2
+)
+```
+
+
+
+------------------------------------------------------------------------
+
+# RNA workflow (step 15)
+
+This chunk runs when `workflow` is `rna` or `all`. Its outputs use a separate folder.
+
+## Step 15: Transcriptomics
+
+Compare the supplied RNA expression profiles between HC and UC. Confirm expression units and normalization before interpreting gene-level differences, and ensure metadata follows sample order. A classifier evaluated on the same samples used for gene selection remains exploratory.
+
+```{r step-15, eval=run_rna}
+# Use meta_final, matched to the transposed expression-table sample IDs.
+# correction = "none" leaves gene p-values unadjusted.
+# reference_level identifies the positive class for ROC and confusion metrics.
+
+# Pre-processing
+# Load metadata and feature abundance table
+# Read the RNA sample metadata.
+meta_rna <- read.delim(
+  # Read this file from the configured data folder.
+  file.path(data_dir, "meta_rna.txt"),
+  # Use the first file row as column headings.
+  header = TRUE,
+  # Use the first file column as row identifiers.
+  row.names = 1
+)
+# Read the expression CSV with gene symbols and sample columns.
+count_table_rna <- read_csv(
+  # Read this file from the configured data folder.
+  file.path(data_dir, "rnaibd.csv")
+)
+
+# Keep Symbol and numeric sample columns with positive totals.
+# Retain Symbol and numeric columns with positive totals.
+count_table_clean <- count_table_rna %>%
+  # Select identifiers and the numeric columns described below.
+  select(
+    # Retain the gene identifier column.
+    Symbol,
+    # Keep numeric sample columns whose total is positive.
+    where(~ is.numeric(.) && sum(., na.rm = TRUE) > 0)
+  )
+
+# Convert the `Symbol` column into row names so that genes become rows prior
+# to transposition
+# Use gene symbols as row identifiers before transposing.
+count_df <- count_table_clean %>%
+  # Convert the Symbol column into gene row names.
+  column_to_rownames(var = "Symbol")
+
+# Transpose the count table so that samples are rows and genes/features are
+# columns
+# Transpose the feature table to samples in rows.
+count_t <- as.data.frame(t(count_df))
+
+# Reorder metadata to match the sample order in the feature table
+# Reorder metadata rows to match the transposed sample identifiers.
+meta_final <- meta_rna[rownames(count_t), , drop = FALSE]
+
+
+
+# Application of MicroBiotR
+MBR_stat(
+  # feature abundance table
+  data = count_t,
+  # column name in metadata containing group labels
+  group_col = 'Group',
+  # matched sample metadata data frame
+  meta_data = meta_final,
+  # statistical test method
+  test_type = 'wilcox',
+  # Write outputs to this workflow's output folder.
+  out_path = rna_out,
+  # Set whether feature-wise p-values are adjusted for multiple tests.
+  correction = 'none',
+  # Set the feature-selection threshold for the chosen p-value column.
+  cutoff = 0.00001
+)
+
+MBR_ml(
+  # feature table
+  data = significant_data,
+  # matched sample metadata data frame
+  meta_data = meta_final,
+  # column name in metadata containing group labels
+  group_name = 'Group',
+  # Write outputs to this workflow's output folder.
+  out_path = rna_out,
+  # reference group
+  reference_level = 'UC',
+  # width of the output plot PDF
+  width = 6,
+  # height of the output plot PDF
+  height = 6,
+  # resampling method
+  method = 'repeatedcv',
+  # number of folds
+  number = 5,
+  # number of repeats
+  repeats = 2
+)
+```
+
+
+------------------------------------------------------------------------
+
+# Run details
+
+The constant-feature summaries are expected on sparse 16S/RNA tables; their
+p-values stay `NA`. Installed linkET versions may emit ggplot2 deprecation
+warnings during the Mantel plot. They do not stop the example.
+
+```{r session-info, eval=isTRUE(params$execute)}
+sessionInfo()
+```

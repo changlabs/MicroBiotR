@@ -5,6 +5,7 @@ R loads the top-level `.R` files in this directory when MicroBiotR is installed.
 | Script | Role | Detailed guide |
 | --- | --- | --- |
 | `Micro.R` | Public workflow: SOM, statistics, figures, feature selection, classification, FCS processing and export | [Micro.R walkthrough](../docs/Micro.md) |
+| `globals.R` | Registers intentional column symbols used by plotting/data masks | [Validation guide](../docs/validation.md) |
 | `validation.R` | Shared sample validation and held-out/test prediction checks | [Validation guide](../docs/validation.md) |
 | `dependent.R` | Sampling, SOM training and mapping, label lookup, sample counts and count-table assembly | [dependent.R walkthrough](../docs/dependent.md) |
 
@@ -14,7 +15,7 @@ The separate [`Gating`](../Gating) workflow lives outside the package source and
 
 After installing this checkout, use `library(MicroBiotR)` and `?MBR_stat` (or any other documented function). `?assign_clusters` opens the internal helper's help page; calling it requires `MicroBiotR:::assign_clusters`. Functions defined only inside another function are local closures and cannot be called as package APIs: `stat_func` implements the ANOVA branch of `MBR_beta`, and `show_plots` implements the interactive pause in `MBR_fs`.
 
-Roxygen comments in these scripts are the source for `man/*.Rd`. Regenerate help only with `roxygen2::roxygenize(".", roclets = "rd")` when making documentation-only changes. The namespace and dependency declarations are deliberately retained. Current roxygen versions can update DESCRIPTION metadata, so inspect and restore that incidental change when the scope is documentation only.
+Roxygen comments in these scripts are the source for `man/*.Rd`. Regenerate help only with `roxygen2::roxygenize(".", roclets = "rd")` when making documentation-only changes. When changing imports, update the roxygen import declarations and regenerate the namespace with the `namespace` roclet as well. Review generated changes against the intended scope. Current roxygen versions can update DESCRIPTION metadata, so inspect and restore that incidental change when the scope is documentation only.
 
 ## Input conventions
 

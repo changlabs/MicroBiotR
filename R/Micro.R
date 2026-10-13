@@ -28,6 +28,10 @@
 #' @import tibble
 #' @import viridis
 #' @importFrom scales trans_format
+#' @importFrom grDevices colorRampPalette dev.off pdf
+#' @importFrom stats aov as.dist cmdscale p.adjust reorder setNames
+#' @importFrom utils combn setTxtProgressBar txtProgressBar write.csv write.table
+#' @importFrom randomForest randomForest
 
 
 #' @title Train a shared SOM and export sample cluster abundances
@@ -70,7 +74,7 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
                     n_cells_sub = 3e5, out_path = './') {
 
   # ================================================================
-  # Stage 1: Environment Setup and Validation
+  # Preparation: Output Directory
   # ================================================================
   cat("==========================================\n")
   cat("Starting Analysis Pipeline\n")
@@ -79,13 +83,13 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   # Create output directory
   if (!dir.exists(out_path)) {
     dir.create(out_path, recursive = TRUE)
-    cat("✓ Created output directory:", out_path, "\n")
+    cat("\u2713 Created output directory:", out_path, "\n")
   }
 
   # ================================================================
-  # Stage 5: Sample Quality Control
+  # Stage 1: Sample Quality Control
   # ================================================================
-  cat("\nStep 4: Sample Quality Control\n")
+  cat("\nStage 1: Sample Quality Control\n")
   cat("----------------------------------------\n")
 
   min_cells <- 2e5
@@ -100,19 +104,19 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
     warning(paste0("Dropping low cell count samples: ",
                    paste(dropped_samples, collapse = ", "),
                    " (cell count < ", format(min_cells, scientific = FALSE), ")"))
-    cat("⚠ Dropped", length(dropped_samples), "samples\n")
+    cat("\u26a0 Dropped", length(dropped_samples), "samples\n")
   }
 
   # Filter samples
   gated_fcs <- gated_fcs[!low_count_samples]
-  cat("✓ Retained", length(gated_fcs), "/", original_sample_count, "samples\n")
+  cat("\u2713 Retained", length(gated_fcs), "/", original_sample_count, "samples\n")
 
   if (!length(gated_fcs)) stop("No samples meet the 200000-event minimum.")
 
   # ================================================================
   # Stage 2: Random Sampling
   # ================================================================
-  cat("\nStep 1: Performing Random Sampling\n")
+  cat("\nStage 2: Performing Random Sampling\n")
   cat("----------------------------------------\n")
   cat("Target sampling size:", format(n_cells_sub, scientific = FALSE), "cells\n")
 
@@ -124,12 +128,12 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   )
   sub_sample <- list(name = "random sample", data = sub_sample)
 
-  cat("✓ Sampling completed, obtained", nrow(sub_sample$data), "cells\n")
+  cat("\u2713 Sampling completed, obtained", nrow(sub_sample$data), "cells\n")
 
   # ================================================================
   # Stage 3: SOM Training
   # ================================================================
-  cat("\nStep 2: Training Self-Organizing Map (SOM)\n")
+  cat("\nStage 3: Training Self-Organizing Map (SOM)\n")
   cat("----------------------------------------\n")
   cat("Calculating SOM grid size...\n")
 
@@ -140,13 +144,13 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   # Train SOM
   sub_sample <- compute_som(sub_sample, n_cells = cells_per_node)
 
-  cat("✓ SOM training completed\n")
+  cat("\u2713 SOM training completed\n")
   cat("SOM grid size:", dim(sub_sample$som$grid$pts)[1], "nodes\n")
 
   # ================================================================
   # Stage 4: Save SOM Information
   # ================================================================
-  cat("\nStep 3: Saving SOM Codebook Information\n")
+  cat("\nStage 4: Saving SOM Codebook Information\n")
   cat("----------------------------------------\n")
 
   # Save SOM codebook
@@ -156,13 +160,13 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   som_file <- file.path(out_path, "cluster_information.csv")
   write.csv(cohonen_information, som_file)
 
-  cat("✓ SOM codebook saved to:", som_file, "\n")
+  cat("\u2713 SOM codebook saved to:", som_file, "\n")
   cat("Codebook dimensions:", dim(cohonen_information), "\n")
 
   # ================================================================
-  # Stage 6: Mapping to SOM
+  # Stage 5: Mapping to SOM
   # ================================================================
-  cat("\nStep 5: Mapping All Samples to Trained SOM\n")
+  cat("\nStage 5: Mapping All Samples to Trained SOM\n")
   cat("----------------------------------------\n")
 
   n_subset_large <- 1e10  # Use all cells
@@ -174,30 +178,30 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
                                trained = sub_sample$som,
                                n_subset = n_subset_large)
 
-  cat("✓ SOM mapping completed\n")
+  cat("\u2713 SOM mapping completed\n")
 
   # ================================================================
-  # Stage 7: Cluster Assignment
+  # Stage 6: Cluster Assignment
   # ================================================================
-  cat("\nStep 6: Assigning Cluster Labels\n")
+  cat("\nStage 6: Assigning Cluster Labels\n")
   cat("----------------------------------------\n")
 
   # Create cluster number matrix
   cluster_number <- as.matrix(as.list(1:2025))
   colnames(cluster_number) <- as.character(2025)
 
-  cat("Total clusters:", ncol(cluster_number), "\n")
+  cat("Total clusters:", nrow(cluster_number), "\n")
   cat("Assigning cluster labels...\n")
 
   # Assign clusters (with progress bar)
   SOM_fcs <- pbapply::pblapply(SOM_fcs, assign_clusters, clusters = cluster_number)
 
-  cat("✓ Cluster assignment completed\n")
+  cat("\u2713 Cluster assignment completed\n")
 
   # ================================================================
-  # Stage 8: Counting and Statistics
+  # Stage 7: Counting and Statistics
   # ================================================================
-  cat("\nStep 7: Computing Cluster Statistics\n")
+  cat("\nStage 7: Computing Cluster Statistics\n")
   cat("----------------------------------------\n")
 
   cat("Calculating cell counts for each cluster...\n")
@@ -209,12 +213,12 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   # Get count tables
   count_tables <- get_counts(SOM_fcs)
 
-  cat("✓ Counting completed\n")
+  cat("\u2713 Counting completed\n")
 
   # ================================================================
-  # Stage 9: Save Count Results
+  # Stage 8: Save Count Results
   # ================================================================
-  cat("\nStep 8: Saving Count Results\n")
+  cat("\nStage 8: Saving Count Results\n")
   cat("----------------------------------------\n")
 
   # Save count tables
@@ -224,7 +228,7 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   count_file <- file.path(tmp_path, "count_table_SOM.save")
   save(count_tables, file = count_file, compress = TRUE)
 
-  cat("✓ Raw count table saved to:", count_file, "\n")
+  cat("\u2713 Raw count table saved to:", count_file, "\n")
 
   # Process and normalize counts
   raw_count_table <- as.data.frame(t(count_tables[[1]]))
@@ -234,32 +238,32 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   rare_clusters <- sum(apply(count_table_2025 < 1e-4, 2, all))
   if (rare_clusters > 0) {
     warning(paste0(rare_clusters, ' clusters are below 0.01% of cells in ALL samples!'))
-    cat("Found", rare_clusters, "rare clusters present in all samples\n")
+    cat("Found", rare_clusters, "clusters below 0.01% in every sample\n")
   } else {
-  	cat("✓ No clusters found below 0.01% in all samples (0 rare clusters)\n")
+    cat("\u2713 No clusters found below 0.01% in all samples (0 rare clusters)\n")
   }
 
   # Save normalized count table
   som_file <- file.path(out_path, "SOM.csv")
   write.csv(count_table_2025, som_file)
 
-  cat("✓ Normalized count table saved to:", som_file, "\n")
+  cat("\u2713 Normalized count table saved to:", som_file, "\n")
 
   # Save to global environment
   assign("raw_count_table", raw_count_table, envir = .GlobalEnv)
   assign("count_table", count_table_2025, envir = .GlobalEnv)
 
   # ================================================================
-  # Stage 10: Export FCS Files
+  # Stage 9: Export FCS Files
   # ================================================================
-  cat("\nStep 9: Exporting Mapped FCS Files\n")
+  cat("\nStage 9: Exporting Mapped FCS Files\n")
   cat("----------------------------------------\n")
 
   # Create output directory
   dir_name <- file.path(out_path, "MappedFCS")
   if (!dir.exists(dir_name)) {
     dir.create(dir_name, recursive = TRUE)
-    cat("✓ Created FCS output directory:", dir_name, "\n")
+    cat("\u2713 Created FCS output directory:", dir_name, "\n")
   }
 
   cat("Exporting", length(SOM_fcs), "FCS files...\n")
@@ -286,7 +290,7 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   }
 
   close(pb)
-  cat("\n✓ FCS file export completed\n")
+  cat("\n\u2713 FCS file export completed\n")
 
   # ================================================================
   # Completion Summary
@@ -295,7 +299,7 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
   cat("Analysis Pipeline Completed!\n")
   cat("==========================================\n")
   cat("Processed samples:", length(SOM_fcs), "\n")
-  cat("Total clusters:", ncol(cluster_number), "\n")
+  cat("Total clusters:", nrow(cluster_number), "\n")
   cat("Output directory:", out_path, "\n")
   cat("\nMain output files:\n")
   cat("- SOM codebook:", file.path(out_path, "cluster_information.csv"), "\n")
@@ -325,7 +329,7 @@ MBR_som <- function(gated_fcs = NULL, m = 2e3, n_hclust = 300,
 #'
 #' BH and fdr both request Benjamini-Hochberg adjustment, controlling false discovery rate under its dependence assumptions. bonferroni controls family-wise error through a more conservative adjustment. none, the default, leaves p-values unadjusted. Selection uses p.adj < cutoff, strictly excluding equality. Feature-wise tests on proportions remain affected by compositional dependence.
 #'
-#' Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
+#' Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Constant features are skipped with one summary warning and retain NA p-values. Other failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
 #'
 #' @return
 #' The significant feature data frame, returned invisibly by the final assign call; pvalue_data is also assigned globally.
@@ -377,8 +381,16 @@ MBR_stat <- function(data = NULL, meta_data = NULL, group_col = NULL,
       (test_type %in% c('wilcox', 't.test', 'ttest') && nlevels(group_vec) != 2L)) {
     stop("The selected test requires two groups (or at least two for kruskal/anova).")
   }
-  # Warnings retain valid test results; failed tests remain explicitly missing.
+  # Constant features have no testable variation; retain NA without invoking
+  # tests that would emit hundreds of identical warnings on sparse tables.
+  constant_features <- vapply(data, function(values) length(unique(values)) < 2L, logical(1))
+  if (any(constant_features)) {
+    warning(sprintf("Skipped %d constant features with no variation; their p-values remain NA and they are excluded from significance selection.",
+                    sum(constant_features)), call. = FALSE)
+  }
+  # Warnings retain valid test results; other failed tests remain missing.
   original_pvalues <- vapply(names(data), function(feature) {
+    if (constant_features[[feature]]) return(NA_real_)
     t <- data[[feature]]
     tryCatch({
       value <- switch(test_type,
@@ -553,7 +565,7 @@ MBR_circle <- function(data = NULL, meta_data = NULL, group_col = NULL,
 #' @details
 #' Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
 #'
-#' Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 selects the lowercase column v1 and the row v1 of pvalue_data. Metadata rows must match data order. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
+#' Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 matches v1 or V1 independently in data columns and pvalue_data rows. Metadata is aligned by sample ID; inputs without meaningful IDs use positional alignment with a warning. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
 #'
 #' A violin is a smoothed density estimate, and the overlaid box plot summarizes the median and interquartile range. The abundance label assumes data already contains proportions. Supply enough colors for all groups. The annotation is positioned at x = 1.5, appropriate for a two-group comparison. Writes violin_cluster_<cluster>_<p>.pdf to an existing directory and prints the plot.
 #'
@@ -721,7 +733,7 @@ MBR_beta <- function(data, out_path = './', test = 'wilcox',
   sink()
 
   p <- ggscatter(pc12, x = "pc_x", y = "pc_y",
-                 color = "group", shape = "group", linewidth = 3,
+                 color = "group", shape = "group", size = 3,
                  ellipse = TRUE, conf.int.level = 0.95,
                  mean.point = TRUE, star.plot = TRUE, star.plot.lty = 1) +
     geom_hline(yintercept = 0, color = '#B3B3B3') +
@@ -819,7 +831,7 @@ MBR_beta <- function(data, out_path = './', test = 'wilcox',
 #'
 #' Random forests combine trees fitted to bootstrap samples and random predictor subsets. RFE ranks predictors and compares candidate subsets using resampling. Importance can be unstable when predictors are correlated. Effect-size plots use log10(value + 1), despite an axis label saying log10(abundance). Cohen's d is a standardized difference in group means; its sign depends on group ordering and ref_group. The displayed 95 percent intervals and effects are calculated after selecting features on these same data, so they are exploratory rather than selection-adjusted inference. Use two groups for this workflow and keep feature selection inside an outer resampling loop when evaluating predictive performance.
 #'
-#' Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features using superassignment, normally into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
+#' Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features explicitly into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
 #'
 #' @return
 #' Invisible NULL; selected feature data are available as MBR_selected_features and files.
@@ -891,8 +903,9 @@ MBR_fs <- function(data = NULL, out_path = './',
   write.table(df2, file = file.path(out_path, 'figure1.txt'), row.names = FALSE, sep = '\t', quote = FALSE)
 
   # Save selected features ONLY (no group) from input data to global environment
-  MBR_selected_features <<- data[, best_selection, drop = FALSE]
-  rownames(MBR_selected_features) <<- rownames(data)
+  selected_features <- data[, best_selection, drop = FALSE]
+  rownames(selected_features) <- rownames(data)
+  assign("MBR_selected_features", selected_features, envir = .GlobalEnv)
 
   varimp_all <- varImp(results)
   varimp_df <- varimp_all[best_selection, , drop = FALSE]
@@ -998,7 +1011,7 @@ MBR_fs <- function(data = NULL, out_path = './',
 #' @details
 #' Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
 #'
-#' Only the column names of data select clusters; its abundance values are not plotted. Both v1 and V1 are converted to V1 for lookup, so cohonen_information must have matching UPPERCASE V-prefixed row names. MBR_som's codebook normally has numeric row names; adapt a copy before passing it here. Missing matches yield missing rows.
+#' Only the column names of data select clusters; its abundance values are not plotted. Cluster labels such as v1 and V1 match either prefix case in the codebook. The default SOM workflow produces V-prefixed codebook row names; codebooks imported from other sources need matching v/V-prefixed labels. Missing or ambiguous matches raise errors.
 #'
 #' The plotted matrix contains prototype channel values. Row scaling standardizes channels within each selected node; column scaling standardizes nodes within each channel; none preserves input units. These different choices change the interpretation of color. Constant rows or columns may fail when scaled. Optional clustering uses pheatmap defaults; it does not alter the package's original SOM assignments. A numeric conversion df_mat is computed but the original subset df is actually plotted. The argument boarder_color is intentionally spelled as in the implementation. Writes heatmap.pdf and draws the plot; out_path must exist.
 #'
@@ -1651,7 +1664,7 @@ MBR_process <- function(fcs_files,
 #' @param column_mapping Optional named character vector mapping old channel names to new names.
 #'
 #' @details
-#' Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
+#' Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. MBR_flow_plot aligns annotation coordinates to selected_rows by cluster ID, independent of this retained input order.
 #'
 #' @return
 #' A data frame containing the selected, renamed and transformed rows.
@@ -1715,7 +1728,7 @@ MBR_prepare <- function(bins,
 #' @param theme_family Font family for the plot theme; default Helvetica.
 #'
 #' @details
-#' dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Events outside scale limits are removed for plot calculations.
+#' dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Axis limits crop the display using Cartesian coordinates without excluding finite positive events from density calculations. Missing or nonpositive channel values are still invalid for log axes and may emit plotting warnings.
 #'
 #' Numeric event classes and v/V-prefixed cluster labels are supported. selected_rows matches either prefix case; missing requests and case-ambiguous IDs raise errors. bins must have x and y columns and cluster row names; coordinates are matched to selected_rows regardless of row order or prefix case. No statistical test is performed. This returns a plot without saving or printing it.
 #'
@@ -1750,15 +1763,14 @@ MBR_flow_plot <- function(dat,
 
   # Create the base plot
   p <- dat %>%
-    ggplot(aes_string(x = x, y = y)) +
+    ggplot(aes(x = .data[[x]], y = .data[[y]])) +
     geom_hex(bins = hex_bins) +
     scale_fill_viridis(discrete = FALSE, trans = 'log') +
-    scale_x_log10(breaks = c(0, 10, 100, 1000, 10000),
-                  labels = trans_format("log10", scales::math_format(10^.x)),
-                  limits = x_limits) +
+    scale_x_log10(breaks = c(1, 10, 100, 1000, 10000),
+                  labels = trans_format("log10", scales::math_format(10^.x))) +
     scale_y_log10(breaks = c(1, 10, 100, 1000, 10000),
-                  labels = trans_format("log10", scales::math_format(10^.x)),
-                  limits = y_limits) +
+                  labels = trans_format("log10", scales::math_format(10^.x))) +
+    coord_cartesian(xlim = x_limits, ylim = y_limits) +
     theme_bw() +
     theme(text = element_text(family = theme_family))
 
@@ -1770,7 +1782,7 @@ MBR_flow_plot <- function(dat,
     selected_ids <- unique(event_ids)[selected_index]
     p <- p +
       geom_point(data = dat[event_ids %in% selected_ids, , drop = FALSE],
-                 aes_string(x = x, y = y),
+                 aes(x = .data[[x]], y = .data[[y]]),
                  color = point_color,
                  alpha = point_alpha,
                  size = point_size)
@@ -1926,7 +1938,7 @@ MBR_save <- function(fcs_files, dat, selected_rows, file_index = 1, rawdata_path
   new_parameters_ADF <- Biobase::AnnotatedDataFrame(filtered_params_df)
 
   # 4. Rebuild description
-  original_desc <- Biobase::description(original_flowframe)
+  original_desc <- flowCore::keyword(original_flowframe)
   new_desc <- list()
 
   for (key in names(original_desc)) {

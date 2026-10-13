@@ -39,7 +39,7 @@ wilcox uses the unpaired, two-sided Wilcoxon rank-sum test for two groups. It co
 
 BH and fdr both request Benjamini-Hochberg adjustment, controlling false discovery rate under its dependence assumptions. bonferroni controls family-wise error through a more conservative adjustment. none, the default, leaves p-values unadjusted. Selection uses p.adj < cutoff, strictly excluding equality. Feature-wise tests on proportions remain affected by compositional dependence.
 
-Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
+Wilcoxon tests use a normal approximation (exact = FALSE), including ties. Constant features are skipped with one summary warning and retain NA p-values. Other failed or non-finite feature tests emit a feature-specific warning and retain NA p-values; missing results are excluded from significance selection. Invalid test names stop before testing.
 
 **Result:** The significant feature data frame, returned invisibly by the final assign call; pvalue_data is also assigned globally.
 
@@ -83,7 +83,7 @@ stopifnot(file.exists(file.path(out, "circle.pdf")))
 
 Draws a violin and box plot for one cluster and annotates a supplied raw or adjusted p-value.
 
-Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 selects the lowercase column v1 and the row v1 of pvalue_data. Metadata rows must match data order. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
+Numeric matrices and data frames are accepted and converted to a data frame for named column extraction. cluster = 1 matches v1 or V1 independently in data columns and pvalue_data rows. Metadata is aligned by sample ID; inputs without meaningful IDs use positional alignment with a warning. p specifies an existing p-value column, normally p.value or p.adj. No test is performed by this function; annotation validity depends on the provenance and correction of the supplied table.
 
 A violin is a smoothed density estimate, and the overlaid box plot summarizes the median and interquartile range. The abundance label assumes data already contains proportions. Supply enough colors for all groups. The annotation is positioned at x = 1.5, appropriate for a two-group comparison. Writes violin_cluster_<cluster>_<p>.pdf to an existing directory and prints the plot.
 
@@ -137,7 +137,7 @@ The wrapper sets the random seed to 2025. Row-aligned numeric features and a met
 
 Random forests combine trees fitted to bootstrap samples and random predictor subsets. RFE ranks predictors and compares candidate subsets using resampling. Importance can be unstable when predictors are correlated. Effect-size plots use log10(value + 1), despite an axis label saying log10(abundance). Cohen's d is a standardized difference in group means; its sign depends on group ordering and ref_group. The displayed 95 percent intervals and effects are calculated after selecting features on these same data, so they are exploratory rather than selection-adjusted inference. Use two groups for this workflow and keep feature selection inside an outer resampling loop when evaluating predictive performance.
 
-Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features using superassignment, normally into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
+Writes .group.txt, figure1.txt (selected features plus group), and feature_exploration.pdf. Assigns MBR_selected_features explicitly into the global environment. Requires an existing output directory. Missing importance rows are removed with tidyr::drop_na. Three console plots are shown with readline prompts, so this workflow is interactive. The fitted RFE object is not returned.
 
 **Result:** Invisible NULL; selected feature data are available as MBR_selected_features and files.
 
@@ -159,7 +159,7 @@ stopifnot(nrow(MBR_selected_features) == nrow(data),
 
 Selects codebook rows using feature column names and renders a configurable pheatmap.
 
-Only the column names of data select clusters; its abundance values are not plotted. Both v1 and V1 are converted to V1 for lookup, so cohonen_information must have matching UPPERCASE V-prefixed row names. MBR_som's codebook normally has numeric row names; adapt a copy before passing it here. Missing matches yield missing rows.
+Only the column names of data select clusters; its abundance values are not plotted. Cluster labels such as v1 and V1 match either prefix case in the codebook. The default SOM workflow produces V-prefixed codebook row names; codebooks imported from other sources need matching v/V-prefixed labels. Missing or ambiguous matches raise errors.
 
 The plotted matrix contains prototype channel values. Row scaling standardizes channels within each selected node; column scaling standardizes nodes within each channel; none preserves input units. These different choices change the interpretation of color. Constant rows or columns may fail when scaled. Optional clustering uses pheatmap defaults; it does not alter the package's original SOM assignments. A numeric conversion df_mat is computed but the original subset df is actually plotted. The argument boarder_color is intentionally spelled as in the implementation. Writes heatmap.pdf and draws the plot; out_path must exist.
 
@@ -315,7 +315,7 @@ stopifnot("scatter" %in% names(x), identical(as.numeric(x$classes), c(1, 2)))
 
 Filters a prototype table by row name, optionally renames channels, and transforms all remaining columns.
 
-Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. For plot labels, explicitly align selected_rows to the resulting row order.
+Cluster labels such as v1 and V1 match equivalently, retaining the INPUT row order and original names. Missing requests and duplicate or case-ambiguous IDs raise errors. Unlike MBR_process, every column is transformed, including any label column supplied accidentally. Keep only appropriate numeric channels. The default exponential transformation assumes the original 65000 instrument scale and should match the transformation used for plotted events. Renaming occurs before transformation; a named character vector maps old names to new names. MBR_flow_plot aligns annotation coordinates to selected_rows by cluster ID, independent of this retained input order.
 
 **Result:** A data frame containing the selected, renamed and transformed rows.
 
@@ -331,7 +331,7 @@ stopifnot(identical(rownames(x), c("V1", "V3")), "scatter" %in% names(x))
 
 Builds a two-channel hexagonal density plot with logarithmic axes, highlighted events, and optional prototype labels.
 
-dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Events outside scale limits are removed for plot calculations.
+dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Axis limits crop the display using Cartesian coordinates without excluding finite positive events from density calculations. Missing or nonpositive channel values are still invalid for log axes and may emit plotting warnings.
 
 Numeric event classes and v/V-prefixed cluster labels are supported. selected_rows matches either prefix case; missing requests and case-ambiguous IDs raise errors. bins must have x and y columns and cluster row names; coordinates are matched to selected_rows regardless of row order or prefix case. No statistical test is performed. This returns a plot without saving or printing it.
 

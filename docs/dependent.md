@@ -109,7 +109,7 @@ stopifnot(identical(as.numeric(y$counts[["4"]]), c(2, 0, 1, 0)),
 
 Collects count resolutions across samples, aligns cluster rows, and combines count columns.
 
-data is a named list of sample lists with counts produced by count_observations. For each resolution, samples lacking it are omitted; they do not get a zero column. Cluster IDs are the numeric row names of per-sample count matrices, sorted numerically. Missing cluster rows in a included sample are filled with zeros. Each input count matrix is treated as a single column. Result row names are lowercase v-prefixed IDs and column names come from outer sample-list names, not data$name. This establishes the abundance-column convention used by MBR_violin after transposing. No normalization or hypothesis test is performed.
+data is a named list of sample lists with counts produced by count_observations. For each resolution, samples lacking it are omitted; they do not get a zero column. Cluster IDs are the numeric row names of per-sample count matrices, sorted numerically. Missing cluster rows in an included sample are filled with zeros. Each input count matrix is treated as a single column. Result row names are lowercase v-prefixed IDs and column names come from outer sample-list names, not data$name. This establishes the abundance-column convention used by MBR_violin after transposing. No normalization or hypothesis test is performed.
 
 **Result:** A named list of numeric cluster-by-sample matrices, one per available count resolution.
 

@@ -57,7 +57,7 @@ A ggplot object that can be printed or saved with ggplot2::ggsave.
 Builds a two-channel hexagonal density plot with logarithmic axes, highlighted events, and optional prototype labels.
 }
 \details{
-dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Events outside scale limits are removed for plot calculations.
+dat must contain positive numeric x and y channels for log axes. geom_hex counts events per hexagon and the fill scale is logarithmic. hex_bins sets the spatial resolution, so colors summarize counts per bin rather than normalized probability. The hexbin backend must be installed. Axis limits crop the display using Cartesian coordinates without excluding finite positive events from density calculations. Missing or nonpositive channel values are still invalid for log axes and may emit plotting warnings.
 
 Numeric event classes and v/V-prefixed cluster labels are supported. selected_rows matches either prefix case; missing requests and case-ambiguous IDs raise errors. bins must have x and y columns and cluster row names; coordinates are matched to selected_rows regardless of row order or prefix case. No statistical test is performed. This returns a plot without saving or printing it.
 }

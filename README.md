@@ -13,29 +13,14 @@ Blue parallelograms show user inputs, amber ovals show functions or scripts, and
 Install the supporting R packages before installing MicroBiotR.
 
 ``` r
-# Uncomment this line if devtools is not installed.
-# install.packages("devtools")
-# Install the Mantel-test and correlation visualization package.
-devtools::install_github("Hy4m/linkET", force = TRUE)
-# Check the installed linkET version.
-packageVersion("linkET")
-
-# Check whether the Bioconductor package manager is available.
-if (!require("BiocManager", quietly = TRUE))
-    # Install BiocManager when it is unavailable.
-    install.packages("BiocManager")
-# Install the metadata structures used with cytometry objects.
-BiocManager::install("Biobase")
-
-# Install the color scales used in flow cytometry plots.
-install.packages("viridis")
-
-# Install Biobase from its GitHub repository.
-devtools::install_github("Bioconductor/Biobase", force = TRUE)
-# Install BiocManager using the CRAN repository.
-install.packages("BiocManager", repos = "https://cran.R-project.org")
-# Install tools for reading and writing FCS files.
-BiocManager::install("flowCore")
+if (!requireNamespace("devtools", quietly = TRUE)) install.packages("devtools")
+if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocManager")
+# Install Bioconductor dependencies without upgrading unrelated packages.
+BiocManager::install(c("Biobase", "flowCore"), ask = FALSE, update = FALSE)
+# Install packages used by the tutorial and optional flow-density plots.
+install.packages(c("tidyverse", "hexbin", "rmarkdown", "knitr"))
+# Install the correlation/Mantel visualization dependency from GitHub.
+devtools::install_github("Hy4m/linkET", upgrade = "never")
 ```
 
 Install MicroBiotR from [GitHub](https://github.com/changlabs/MicroBiotR) with the following R commands.
@@ -48,6 +33,20 @@ devtools::install_github("changlabs/MicroBiotR")
 # Check the installed MicroBiotR version.
 packageVersion("MicroBiotR")
 ```
+
+## Downloadable R Notebook
+
+Download the [runnable tutorial](tutorials/MicroBiotR-tutorial.Rmd), open it in RStudio, and use **Run All** instead of copying individual code chunks. On GitHub, open the file and select **Download raw file**. The notebook contains all 15 steps; choose `16s` (default), `rna`, `cytometry`, or `all` in its YAML header. Set data/output folders and optionally enable downloads from Zenodo. Each workflow writes to its own output folder.
+
+The notebook supports `html_notebook` for RStudio Preview and `html_document` for an HTML report that executes the chosen workflow. Download the [rendered 16S HTML example](tutorials/MicroBiotR-tutorial.html) and open it in a browser. It contains actual example outputs; other workflows remain available in the notebook.
+
+After installing the packages above, save the `.Rmd` in an analysis folder and run this from that folder:
+
+```r
+rmarkdown::render("MicroBiotR-tutorial.Rmd", output_format = "html_document")
+```
+
+RStudio supplies Pandoc; rendering outside RStudio requires Pandoc on your system. The cytometry workflow uses the full dataset and can take substantial time and memory. See the [notebook guide](tutorials/README.md) for parameters, output reuse, and validation instructions.
 
 ## Download the example dataset
 
@@ -87,11 +86,10 @@ library(tidyverse)
 # Read sample metadata with the first column as sample identifiers.
 meta<-read.delim('meta.txt',header = T, row.names = 1)
 
-# Load fl_data_ig, the list of gated single-cell sample matrices.
+# Load fl_data_ig, a named sample list with name and event-data fields.
 load(file.path("data_gated.save"))
 # Set the random seed for reproducible sampling or fitting.
 set.seed(2025)
-# Run MBR_som with the inputs and settings below.
 MBR_som(fl_data_ig)
 ```
 
@@ -102,7 +100,6 @@ Compare feature abundances between groups using a [Wilcoxon rank-sum test](https
 ``` r
 # Test options are 'wilcox', 'kruskal', 'anova', 't.test' or 'ttest'.
 # correction could be one of 'none', 'fdr', 'bonferroni' ,'BH'
-# Run MBR_stat with the inputs and settings below.
 MBR_stat(data = count_table, group_col = 'Group', meta_data = meta,
        # Use the two-sided Wilcoxon group test.
        test_type = 'wilcox', out_path = './',
@@ -116,13 +113,12 @@ A circular heatmap summarizes average abundance in each group. The difference tr
 
 ``` r
 # Generate a circular plot to visualize significant features across groups
-# Run MBR_circle with the inputs and settings below.
 MBR_circle(
   # dataframe containing features
   data = significant_data,
   # column name in metadata containing group labels
   group_col = 'Group',
-  # metadata file
+  # matched sample metadata data frame
   meta_data = meta,
   # width of the output figure
   width = 16,
@@ -130,7 +126,6 @@ MBR_circle(
   height = 16,
   # Write outputs to the current working directory.
   out_path = './'
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -144,11 +139,10 @@ Inspect how one cluster is distributed across samples in each group. The violin 
 
 ``` r
 # Generate a violin plot for a selected feature/cluster
-# Run MBR_violin with the inputs and settings below.
 MBR_violin(
   # dataframe containing features
   data = significant_data,
-  # metadata file
+  # matched sample metadata data frame
   meta_data = meta,
   # column name in metadata containing group labels
   group_col = "Group",
@@ -162,7 +156,6 @@ MBR_violin(
   cluster = 1948,
   # Write outputs to the current working directory.
   out_path = './'
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -182,7 +175,6 @@ MBR_violin(
 
 # Perform beta diversity analysis and generate a PCoA plot
 # `test` should be one of 'wilcox', 'ttest', 'kruskal', or 'anova'
-# Run MBR_beta with the inputs and settings below.
 MBR_beta(
   # dataframe containing features
   significant_data,
@@ -190,13 +182,12 @@ MBR_beta(
   out_path = './',
   # statistical test method
   test = 'wilcox',
-  # metadata file
+  # matched sample metadata data frame
   meta_data = meta,
   # column name in metadata containing group labels
   group_name = 'Group',
   # colors used for group visualization
   colors = c('#FFADAD', '#DEDAF4')
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -215,7 +206,6 @@ MBR_beta(
 
 # Perform recursive feature elimination (RFE) for feature selection
 # Random seeds are internally fixed for reproducibility.
-# Run MBR_fs with the inputs and settings below.
 MBR_fs(
   # dataframe containing features
   significant_data,
@@ -235,7 +225,6 @@ MBR_fs(
   ref_group = 'CD',
   # colors used for visualization plots
   colors = c('#FFADAD', '#DEDAF4')
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -256,16 +245,14 @@ MBR_fs(
 Compare the scatter and fluorescence profiles represented by selected SOM nodes. [pheatmap](https://cran.r-project.org/package=pheatmap) displays these channel patterns, with row scaling emphasizing relative values within each node.
 
 ``` r
-# The slice requires at least 184 selected features; choose a suitable subset
-# for your data.
-# Codebook row names must match uppercase V-prefixed feature identifiers.
+# Plot all features retained by feature selection; the number can vary.
+# Codebook row names must match feature identifiers; v/V prefix case is accepted.
 
 # Generate a heatmap for selected features
-# Run MBR_heatmap with the inputs and settings below.
 MBR_heatmap(
   # selected feature matrix for visualization
-  data = MBR_selected_features[,1:184],
-  # cohonen clustering information
+  data = MBR_selected_features,
+  # SOM prototype channel values
   cohonen_information = cohonen_information,
   # Write outputs to the current working directory.
   out_path = './',
@@ -277,7 +264,6 @@ MBR_heatmap(
   cluster_rows = TRUE,
   # whether to display numeric values in the heatmap
   display_numbers = FALSE
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -296,11 +282,10 @@ A [Mantel test](https://vegandevs.github.io/vegan/reference/mantel.html) compare
 
 # Perform Mantel correlation analysis between selected features and metadata
 # variables
-# Run MBR_mantel with the inputs and settings below.
 MBR_mantel(
   # selected feature matrix
   data = MBR_selected_features[,1:10],
-  # metadata file
+  # matched sample metadata data frame
   meta_data = meta,
   # clinical variable columns
   clinical_cols = c("Clinical1", "Clinical2"),
@@ -320,7 +305,6 @@ MBR_mantel(
   width = 6,
   # height of the output figure
   height = 6
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -333,11 +317,10 @@ MBR_mantel(
 The receiver operating characteristic (ROC) curve shows sensitivity across false-positive rates, and area under the curve (AUC) summarizes discrimination. See the [pROC documentation](https://cran.r-project.org/package=pROC) for ROC estimation. This diagnostic uses held-out cross-validation probabilities averaged once per sample. Tuning and prior feature selection can still make the estimates optimistic; supply `test_data` and `test_meta_data` from unused samples for independent evaluation.
 
 ``` r
-# Run MBR_ml with the inputs and settings below.
 MBR_ml(
   # feature table
   data = MBR_selected_features,
-  # metadata file
+  # matched sample metadata data frame
   meta_data = meta,
   # column name in metadata containing group labels
   group_name = 'Group',
@@ -355,7 +338,6 @@ MBR_ml(
   number = 5,
   # number of repeats
   repeats = 2
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -369,11 +351,10 @@ Inspect correctly classified samples and the types of classification error. The 
 
 ``` r
 # Generate a confusion matrix and classification performance summary
-# Run MBR_conf with the inputs and settings below.
 MBR_conf(
   # feature table used for model evaluation
   data = MBR_selected_features,
-  # metadata file
+  # matched sample metadata data frame
   meta_data = meta,
   # column name in metadata containing group labels
   group_name = 'Group',
@@ -381,7 +362,6 @@ MBR_conf(
   reference_level = 'CD',
   # Write outputs to the current working directory.
   out_path = './'
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -394,7 +374,6 @@ MBR_conf(
 Group SOM prototypes into coarser signal profiles using standardized measurements and [Ward hierarchical clustering](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html). Cluster labels summarize similarity; they do not automatically update the mapped event assignments.
 
 ``` r
-# Run MBR_reclustering with the inputs and settings below.
 MBR_reclustering(data = cohonen_information, num_clusters = 1000)
 ```
 
@@ -403,9 +382,9 @@ MBR_reclustering(data = cohonen_information, num_clusters = 1000)
 Locate selected SOM populations in scatter and fluorescence projections. The [flowCore utilities](https://www.bioconductor.org/packages/release/bioc/html/flowCore.html) read the mapped FCS files, while density backgrounds and prototype labels show where selected populations lie. Use transformations appropriate for the acquisition scale.
 
 ``` r
-# file_index = 1 requires at least 70 mapped FCS files.
-# Prototype row names must match selected_rows and their order must match
-# annotation labels.
+# file_index = 1 selects the first mapped FCS sample.
+# Prototype row names must match selected_rows; annotation coordinates are
+# aligned by cluster ID.
 
 # Define the directory containing 'FCS files generated from SOM processing'
 # Locate mapped FCS files produced by SOM analysis.
@@ -417,64 +396,41 @@ fcs_files <- MBR_read(rawdata_path)
 # Define selected SOM cluster IDs to visualize
 # Choose the SOM cluster labels to inspect.
 selected_rows <- c(
-  # Continue the input selection or validation started above.
   'V1122','V1902','V1949','V978','V77','V1813','V1812','V1946','V205','V296'
-# Complete the function call with the arguments above.
 )
 
 
 # Define column name mappings between FCS channels and marker names
 # Map acquisition-channel names to plotting labels.
 column_mapping <- c(
-  # Map acquisition-channel aliases to a shared plotting name.
   "FSC PAR"         = "FSC.PAR",
-  # Map acquisition-channel aliases to a shared plotting name.
   "SSC"             = "SSC",
-  # Map acquisition-channel aliases to a shared plotting name.
   "Hoechst.Red.DNA" = "Hoechst.Red",
-  # Map acquisition-channel aliases to a shared plotting name.
   "Hoechst.Red"     = "Hoechst.Red",
-  # Map acquisition-channel aliases to a shared plotting name.
   "Hoechst Red.DNA" = "Hoechst.Red",
-  # Map acquisition-channel aliases to a shared plotting name.
   "FITC.hIgA2"      = "FITC",
-  # Map acquisition-channel aliases to a shared plotting name.
   "FITC"            = "FITC",
-  # Map acquisition-channel aliases to a shared plotting name.
   "APC.hIgA1"       = "APC",
-  # Map acquisition-channel aliases to a shared plotting name.
   "APC"             = "APC",
-  # Map acquisition-channel aliases to a shared plotting name.
   "Pe-TR.hIgG"      = "Pe.TR",
-  # Map acquisition-channel aliases to a shared plotting name.
   "Pe.TR.hIgG"      = "Pe.TR",
-  # Map acquisition-channel aliases to a shared plotting name.
   "Pe.TR"           = "Pe.TR",
-  # Map acquisition-channel aliases to a shared plotting name.
   "BV650.hIgM"      = "BV650",
-  # Map acquisition-channel aliases to a shared plotting name.
   "BV650"           = "BV650"
-# Complete the function call with the arguments above.
 )
 
 # Define marker/channel combinations for flow cytometry visualization
 # Define the four scatter and fluorescence channel pairs.
 plot_params <- list(
-  # Define the channel pair for this density panel.
   list(x = "FSC.PAR", y = "SSC"),
-  # Define the channel pair for this density panel.
   list(x = "FSC.PAR", y = "Hoechst.Red"),
-  # Define the channel pair for this density panel.
   list(x = "FITC", y = "APC"),
-  # Define the channel pair for this density panel.
   list(x = "Pe.TR", y = "BV650")
-# Complete the function call with the arguments above.
 )
 
 # Process a selected FCS file and apply signal transformation
 # Prepare the selected FCS sample for channel plotting.
 dat <- MBR_process(
-  # Continue the input selection or validation started above.
   fcs_files,
   # Choose this position in the input FCS sample list.
   file_index = 1,
@@ -482,13 +438,11 @@ dat <- MBR_process(
   transformation = function(x) 10^((4 * x) / 65000),
   # defined channel mapping
   column_mapping = column_mapping
-# Complete the function call with the arguments above.
 )
 
 # Prepare SOM clusters for downstream visualization
 # Prepare matching SOM prototypes for annotation.
 bins <- MBR_prepare(
-  # Continue the input selection or validation started above.
   cohonen_information,
   # selected SOM clusters
   selected_rows = selected_rows,
@@ -496,7 +450,6 @@ bins <- MBR_prepare(
   transformation = function(x) 10^((4 * x) / 65000),
   # defined channel mapping
   column_mapping = column_mapping
-# Complete the function call with the arguments above.
 )
 
 # Generate flow cytometry plots for selected channels and populations
@@ -510,7 +463,6 @@ plots <- MBR_plot(
   plot_params = plot_params,
   # selected SOM clusters
   selected_rows = selected_rows
-# Complete the function call with the arguments above.
 )
 
 # Display generated plots
@@ -532,7 +484,6 @@ Save selected events for inspection in flow cytometry software. Export writes th
 export_dat <- MBR_process(fcs_files, file_index = 1, transformation = identity)
 
 # Save selected gated populations/clusters as a new FCS file
-# Run MBR_save with the inputs and settings below.
 MBR_save(
   # list of input FCS files
   fcs_files = fcs_files,
@@ -544,7 +495,6 @@ MBR_save(
   file_index = 1,
   # directory containing raw FCS files
   rawdata_path = rawdata_path
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -567,7 +517,6 @@ meta_16s <- read.delim(
   header = TRUE,
   # Use the first file column as row identifiers.
   row.names = 1
-# Complete the function call with the arguments above.
 )
 # Read the taxa-by-sample feature table.
 count_table_16s <- read.delim(
@@ -577,7 +526,6 @@ count_table_16s <- read.delim(
   header = TRUE,
   # Use the first file column as row identifiers.
   row.names = 1
-# Complete the function call with the arguments above.
 )
 
 # This operation filters sample columns with zero totals, not taxon rows.
@@ -592,18 +540,17 @@ count_t <- as.data.frame(t(count_table_filtered))
 
 # Reorder metadata to match the sample order in the feature table
 # Reorder metadata rows to match the transposed sample identifiers.
-meta_final <- meta_16s[rownames(count_t), ]
+meta_final <- meta_16s[rownames(count_t), , drop = FALSE]
 
 
 
 # Application of MicroBiotR
-# Run MBR_stat with the inputs and settings below.
 MBR_stat(
   # feature abundance table
   data = count_t,
   # column name in metadata containing group labels
   group_col = 'Group',
-  # metadata files
+  # matched sample metadata data frame
   meta_data = meta_final,
   # statistical test method
   test_type = 'wilcox',
@@ -613,10 +560,8 @@ MBR_stat(
   correction = 'none',
   # Set the feature-selection threshold for the chosen p-value column.
   cutoff = 0.1
-# Complete the function call with the arguments above.
 )
 
-# Run MBR_fs with the inputs and settings below.
 MBR_fs(
   # input dataframe containing significant features
   significant_data,
@@ -630,20 +575,18 @@ MBR_fs(
   top_n_features = 10,
   # column name in metadata containing class/group labels
   group_name = 'Group',
-  # metadata files
+  # matched sample metadata data frame
   meta_data = meta_final,
   # reference/control group used for comparison
   ref_group = 'CD',
   # colors used for visualization plots
   colors = c('#FFADAD', '#DEDAF4')
-# Complete the function call with the arguments above.
 )
 
-# Run MBR_ml with the inputs and settings below.
 MBR_ml(
   # feature table
   data = MBR_selected_features,
-  # metadata files
+  # matched sample metadata data frame
   meta_data = meta_final,
   # column name in metadata containing group labels
   group_name = 'Group',
@@ -661,7 +604,6 @@ MBR_ml(
   number = 5,
   # number of repeats
   repeats = 2
-# Complete the function call with the arguments above.
 )
 ```
 
@@ -688,13 +630,11 @@ meta_rna <- read.delim(
   header = TRUE,
   # Use the first file column as row identifiers.
   row.names = 1
-# Complete the function call with the arguments above.
 )
 # Read the expression CSV with gene symbols and sample columns.
 count_table_rna <- read_csv(
   # Read this downloaded file from the working directory.
   'rnaibd.csv'
-# Complete the function call with the arguments above.
 )
 
 # Keep Symbol and numeric sample columns with positive totals.
@@ -706,7 +646,6 @@ count_table_clean <- count_table_rna %>%
     Symbol,
     # Keep numeric sample columns whose total is positive.
     where(~ is.numeric(.) && sum(., na.rm = TRUE) > 0)
-  # Complete the function call with the arguments above.
   )
 
 # Convert the `Symbol` column into row names so that genes become rows prior
@@ -723,18 +662,17 @@ count_t <- as.data.frame(t(count_df))
 
 # Reorder metadata to match the sample order in the feature table
 # Reorder metadata rows to match the transposed sample identifiers.
-meta_final <- meta_rna[rownames(count_t), ]
+meta_final <- meta_rna[rownames(count_t), , drop = FALSE]
 
 
 
 # Application of MicroBiotR
-# Run MBR_stat with the inputs and settings below.
 MBR_stat(
   # feature abundance table
   data = count_t,
   # column name in metadata containing group labels
   group_col = 'Group',
-  # metadata files
+  # matched sample metadata data frame
   meta_data = meta_final,
   # statistical test method
   test_type = 'wilcox',
@@ -744,14 +682,12 @@ MBR_stat(
   correction = 'none',
   # Set the feature-selection threshold for the chosen p-value column.
   cutoff = 0.00001
-# Complete the function call with the arguments above.
 )
 
-# Run MBR_ml with the inputs and settings below.
 MBR_ml(
   # feature table
   data = significant_data,
-  # metadata files
+  # matched sample metadata data frame
   meta_data = meta_final,
   # column name in metadata containing group labels
   group_name = 'Group',
@@ -769,7 +705,6 @@ MBR_ml(
   number = 5,
   # number of repeats
   repeats = 2
-# Complete the function call with the arguments above.
 )
 ```
 
