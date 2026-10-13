@@ -27,10 +27,6 @@ example("MBR_reclustering", package = "MicroBiotR")
 
 Every package function has an example with `stopifnot` checks where useful. Examples use `tempfile` output directories and synthetic values, not biological evidence. They may assign documented global objects, print figures, change RNG state and leave temporary output files. Execute them in a disposable R session if you want isolation.
 
-## Downloadable real-data tutorial
-
-The [R Notebook](../tutorials/MicroBiotR-tutorial.Rmd) runs the README analyses without copying code chunks. See [the notebook guide](../tutorials/README.md) for workflow selection, rendering, data downloads, and cached SOM outputs. Synthetic help examples below are separate from the real-data notebook.
-
 ## Example categories
 
 * Ordinary examples use small generated objects, with no input-file prerequisite. Run with `example("MBR_stat", package = "MicroBiotR")` and inspect exported CSV files and global result tables.

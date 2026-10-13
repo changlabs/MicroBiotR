@@ -18,7 +18,7 @@ if (!requireNamespace("BiocManager", quietly = TRUE)) install.packages("BiocMana
 # Install Bioconductor dependencies without upgrading unrelated packages.
 BiocManager::install(c("Biobase", "flowCore"), ask = FALSE, update = FALSE)
 # Install packages used by the tutorial and optional flow-density plots.
-install.packages(c("tidyverse", "hexbin", "rmarkdown", "knitr"))
+install.packages(c("tidyverse", "hexbin"))
 # Install the correlation/Mantel visualization dependency from GitHub.
 devtools::install_github("Hy4m/linkET", upgrade = "never")
 ```
@@ -33,20 +33,6 @@ devtools::install_github("changlabs/MicroBiotR")
 # Check the installed MicroBiotR version.
 packageVersion("MicroBiotR")
 ```
-
-## Downloadable R Notebook
-
-Download the [runnable tutorial](tutorials/MicroBiotR-tutorial.Rmd), open it in RStudio, and use **Run All** instead of copying individual code chunks. On GitHub, open the file and select **Download raw file**. The notebook contains all 15 steps; choose `16s` (default), `rna`, `cytometry`, or `all` in its YAML header. Set data/output folders and optionally enable downloads from Zenodo. Each workflow writes to its own output folder.
-
-The notebook supports `html_notebook` for RStudio Preview and `html_document` for an HTML report that executes the chosen workflow. Download the [rendered 16S HTML example](tutorials/MicroBiotR-tutorial.html) and open it in a browser. It contains actual example outputs; other workflows remain available in the notebook.
-
-After installing the packages above, save the `.Rmd` in an analysis folder and run this from that folder:
-
-```r
-rmarkdown::render("MicroBiotR-tutorial.Rmd", output_format = "html_document")
-```
-
-RStudio supplies Pandoc; rendering outside RStudio requires Pandoc on your system. The cytometry workflow uses the full dataset and can take substantial time and memory. See the [notebook guide](tutorials/README.md) for parameters, output reuse, and validation instructions.
 
 ## Download the example dataset
 

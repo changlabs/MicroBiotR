@@ -1,6 +1,6 @@
 # MicroBiotR branch review and local testing
 
-> Historical snapshot from 8 October 2026. Its test counts and limitations describe that revision. For current results and review instructions, see [the tutorial test report](tutorial-local-test-report.md) and [the runnable notebook](../tutorials/MicroBiotR-tutorial.Rmd).
+> Historical snapshot from 8 October 2026. Its test counts and limitations describe that revision. For current results and review instructions, see [the tutorial test report](tutorial-local-test-report.md).
 
 Review branch: [codex/package-development](https://github.com/changlabs/MicroBiotR/tree/codex/package-development) <br>
 Changes: [compare with main](https://github.com/changlabs/MicroBiotR/compare/main...codex/package-development) <br>

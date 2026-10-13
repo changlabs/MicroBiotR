@@ -5,7 +5,3 @@
 .Rproj.user/
 *.Rcheck/
 *.tar.gz
-tutorials/data/
-tutorials/results/
-tutorials/*_files/
-tutorials/*.nb.html

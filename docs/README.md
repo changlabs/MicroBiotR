@@ -2,7 +2,6 @@
 
 This folder explains the workflows, statistical assumptions, input validation and current implementation limitations.
 
-* [Runnable tutorial](../tutorials/README.md): downloadable R Notebook and HTML rendering instructions.
 * [Current test report](tutorial-local-test-report.md): shared validation evidence and remaining limitations.
 * [Micro.R](Micro.md): every public workflow function, its operations, rationale, results and examples.
 * [dependent.R](dependent.md): the six low-level helpers and their data contracts.

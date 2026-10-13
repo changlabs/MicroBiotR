@@ -1,6 +1,6 @@
 # MicroBiotR cluster-label case consistency report
 
-> Historical snapshot from 12 October 2026. Its test counts and limitations describe that revision. For current results and review instructions, see [the tutorial test report](tutorial-local-test-report.md) and [the runnable notebook](../tutorials/MicroBiotR-tutorial.Rmd).
+> Historical snapshot from 12 October 2026. Its test counts and limitations describe that revision. For current results and review instructions, see [the tutorial test report](tutorial-local-test-report.md).
 
 Date: 12 October 2026 <br>
 Branch: `codex/package-development` <br>
