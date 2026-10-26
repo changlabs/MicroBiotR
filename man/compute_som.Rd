@@ -2,15 +2,30 @@
 % Please edit documentation in R/dependent.R
 \name{compute_som}
 \alias{compute_som}
-\title{SOM Computation Function}
+\title{Fit a hexagonal self-organizing map}
 \usage{
 compute_som(data, n_cells = 100)
 }
 \arguments{
-\item{data}{Input data}
+\item{data}{Sample list containing the fields described in Details.}
 
-\item{n_cells}{Expected cells per node}
+\item{n_cells}{Target average events per node used to size the square grid; default 100.}
+}
+\value{
+A copy of data with som containing the trained kohonen object and with the top-level data field removed.
 }
 \description{
-SOM Computation Function
+Builds a square hexagonal kohonen grid and trains prototypes from a sample data matrix.
+}
+\details{
+data is a list with numeric data matrix and optional sample metadata. The grid side is round(sqrt(nrow(data$data)/n_cells)); n_cells is a grid-sizing target, not a guaranteed occupancy. Ensure it yields a positive grid side. Training calls kohonen::som with keep.data = TRUE and otherwise dependency-default training settings. No explicit scaling, missing-value treatment, or seed is supplied. Channels with larger scales can dominate prototype distances.
+
+A SOM represents high-dimensional events with codebook vectors on a neighborhood-preserving grid. It is an unsupervised representation and does not imply biologically validated populations or significance tests. The input list's data field is removed from the returned copy, while training data remain stored inside som because keep.data is true.
+}
+\examples{
+set.seed(42)
+x <- list(name = "training", data = matrix(runif(200), ncol = 2))
+y <- compute_som(x, n_cells = 25)
+stopifnot(inherits(y$som, "kohonen"), is.null(y$data), nrow(y$som$grid$pts) == 4)
+
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_heatmap}
 \alias{MBR_heatmap}
-\title{Heatmap Visualization of SOM Cluster Information}
+\title{Show channel values for selected SOM prototypes}
 \usage{
 MBR_heatmap(
   data = NULL,
@@ -44,7 +44,30 @@ MBR_heatmap(
 
 \item{legend}{Logical, whether to display the legend (default TRUE).}
 }
+\value{
+Invisible NULL; the pheatmap is drawn and saved.
+}
 \description{
-Generates and saves a heatmap of cluster information (e.g., from a Self-Organizing Map analysis).
-The heatmap is created using pheatmap with customizable scaling, clustering, colors, and display options.
+Selects codebook rows using feature column names and renders a configurable pheatmap.
+}
+\details{
+Cluster IDs matching v/V followed by digits are compared using an uppercase V prefix without renaming inputs. Other feature names remain case-sensitive and leading zeros are preserved. Duplicate or case-ambiguous IDs and missing requested clusters raise errors.
+
+Only the column names of data select clusters; its abundance values are not plotted. Cluster labels such as v1 and V1 match either prefix case in the codebook. The default SOM workflow produces V-prefixed codebook row names; codebooks imported from other sources need matching v/V-prefixed labels. Missing or ambiguous matches raise errors.
+
+The plotted matrix contains prototype channel values. Row scaling standardizes channels within each selected node; column scaling standardizes nodes within each channel; none preserves input units. These different choices change the interpretation of color. Constant rows or columns may fail when scaled. Optional clustering uses pheatmap defaults; it does not alter the package's original SOM assignments. A numeric conversion df_mat is computed but the original subset df is actually plotted. The argument boarder_color is intentionally spelled as in the implementation. Writes heatmap.pdf and draws the plot; out_path must exist.
+}
+\examples{
+set.seed(42)
+data <- as.data.frame(matrix(runif(120, 0.01, 1), nrow = 20))
+names(data) <- paste0("v", seq_len(ncol(data)))
+data <- data / rowSums(data)
+meta <- data.frame(Group = rep(c("A", "B"), each = 10))
+out <- tempfile("MicroBiotR-")
+dir.create(out)
+codebook <- as.data.frame(matrix(seq_len(18), nrow = 6))
+rownames(codebook) <- paste0("V", 1:6)
+MBR_heatmap(data, codebook, out_path = out, scale = "none")
+stopifnot(file.exists(file.path(out, "heatmap.pdf")))
+
 }

@@ -2,17 +2,34 @@
 % Please edit documentation in R/dependent.R
 \name{map_som}
 \alias{map_som}
-\title{Map to SOM Function}
+\title{Assign sample events to a trained SOM}
 \usage{
 map_som(data, trained, n_subset)
 }
 \arguments{
-\item{data}{Input data}
+\item{data}{Sample list containing the fields described in Details.}
 
-\item{trained}{Trained SOM}
+\item{trained}{Trained kohonen object with compatible channel order and preprocessing.}
 
-\item{n_subset}{Subset size}
+\item{n_subset}{Positive integer event limit; samples larger than this are randomly reduced.}
+}
+\value{
+A copy of data with data containing the retained events and classes containing their SOM node indices.
 }
 \description{
-Map to SOM Function
+Optionally samples events and maps them to the best matching nodes of a trained kohonen model.
+}
+\details{
+data is a sample list with a numeric data matrix and normally a name. trained is the kohonen object itself, such as compute_som(...)$som, not the entire sample list. Match its channel number, ordering, units and preprocessing. When n_subset is smaller than the sample size, sample.int selects rows without replacement; otherwise all rows are retained. Use a positive integer limit and call set.seed for reproducible subsampling. Row extraction does not set drop = FALSE, so one-row or one-channel subsets can lose matrix shape.
+
+The trained codebook is fixed during mapping. classes contains SOM node IDs rather than biologically curated cluster labels; use assign_clusters for a separate metacluster mapping if appropriate.
+}
+\examples{
+set.seed(42)
+x <- list(name = "sample", data = matrix(runif(200), ncol = 2))
+trained <- compute_som(x, n_cells = 25)$som
+y <- map_som(x, trained, n_subset = 20)
+stopifnot(nrow(y$data) == 20, length(y$classes) == 20,
+          all(y$classes \%in\% seq_len(nrow(trained$grid$pts))))
+
 }

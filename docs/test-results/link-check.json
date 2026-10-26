@@ -1,0 +1,356 @@
+{
+  "checked_on": "2026-10-13",
+  "method": "HTTP HEAD with redirects; SVG namespace and Git transport URL excluded",
+  "results": [
+    {
+      "url": "https://cran.r-project.org/package=kohonen",
+      "status": 200,
+      "final": "https://cran.r-project.org/web/packages/kohonen/index.html",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://cran.R-project.org",
+      "status": 200,
+      "final": "https://cran.R-project.org",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://github.com/changlabs/MicroBiotR",
+      "status": 200,
+      "final": "https://github.com/changlabs/MicroBiotR",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://doi.org/10.5281/zenodo.20286378",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378",
+      "files": [
+        "README.md",
+        "docs/colleague-review.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378/files/data_gated.save?download=1",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378/files/data_gated.save?download=1",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378/files/meta.txt?download=1",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378/files/meta.txt?download=1",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378/files/bac_data.txt?download=1",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378/files/bac_data.txt?download=1",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378/files/bac_meta.txt?download=1",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378/files/bac_meta.txt?download=1",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378/files/rnaibd.csv?download=1",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378/files/rnaibd.csv?download=1",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378/files/meta_rna.txt?download=1",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378/files/meta_rna.txt?download=1",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/wilcox.test.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/wilcox.test.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_stat.Rd"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_stat.Rd"
+      ]
+    },
+    {
+      "url": "https://vegandevs.github.io/vegan/reference/vegdist.html",
+      "status": 200,
+      "final": "https://vegandevs.github.io/vegan/reference/vegdist.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_beta.Rd"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cmdscale.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/cmdscale.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_beta.Rd"
+      ]
+    },
+    {
+      "url": "https://vegandevs.github.io/vegan/reference/adonis.html",
+      "status": 200,
+      "final": "https://vegandevs.github.io/vegan/reference/adonis.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_beta.Rd"
+      ]
+    },
+    {
+      "url": "https://topepo.github.io/caret/recursive-feature-elimination.html",
+      "status": 200,
+      "final": "https://topepo.github.io/caret/recursive-feature-elimination.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_fs.Rd"
+      ]
+    },
+    {
+      "url": "https://cran.r-project.org/package=pheatmap",
+      "status": 200,
+      "final": "https://cran.r-project.org/web/packages/pheatmap/index.html",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://vegandevs.github.io/vegan/reference/mantel.html",
+      "status": 200,
+      "final": "https://vegandevs.github.io/vegan/reference/mantel.html",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://github.com/Hy4m/linkET",
+      "status": 200,
+      "final": "https://github.com/Hy4m/linkET",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://cran.r-project.org/package=pROC",
+      "status": 200,
+      "final": "https://cran.r-project.org/web/packages/pROC/index.html",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://cran.r-project.org/package=randomForest",
+      "status": 200,
+      "final": "https://cran.r-project.org/web/packages/randomForest/index.html",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html",
+      "files": [
+        "R/Micro.R",
+        "README.md",
+        "docs/statistical-methods.md",
+        "man/MBR_reclustering.Rd"
+      ]
+    },
+    {
+      "url": "https://www.bioconductor.org/packages/release/bioc/html/flowCore.html",
+      "status": 200,
+      "final": "https://www.bioconductor.org/packages/release/bioc/html/flowCore.html",
+      "files": [
+        "README.md"
+      ]
+    },
+    {
+      "url": "https://search.r-project.org/CRAN/refmans/randomForest/html/randomForest.html",
+      "status": 200,
+      "final": "https://search.r-project.org/CRAN/refmans/randomForest/html/randomForest.html",
+      "files": [
+        "R/Micro.R",
+        "man/MBR_conf.Rd",
+        "man/MBR_ml.Rd"
+      ]
+    },
+    {
+      "url": "https://rpkgs.datanovia.com/rstatix/reference/cohens_d.html",
+      "status": 200,
+      "final": "https://rpkgs.datanovia.com/rstatix/reference/cohens_d.html",
+      "files": [
+        "R/Micro.R",
+        "docs/statistical-methods.md",
+        "man/MBR_fs.Rd"
+      ]
+    },
+    {
+      "url": "https://github.com/Hy4m/linkET/blob/master/R/mantel-test.R",
+      "status": 200,
+      "final": "https://github.com/Hy4m/linkET/blob/master/R/mantel-test.R",
+      "files": [
+        "R/Micro.R",
+        "docs/statistical-methods.md",
+        "man/MBR_mantel.Rd"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/t.test.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/t.test.html",
+      "files": [
+        "R/Micro.R",
+        "docs/statistical-methods.md",
+        "man/MBR_stat.Rd"
+      ]
+    },
+    {
+      "url": "https://github.com/changlabs/MicroBiotR/tree/codex/package-development",
+      "status": 200,
+      "final": "https://github.com/changlabs/MicroBiotR/tree/codex/package-development",
+      "files": [
+        "docs/colleague-review.md"
+      ]
+    },
+    {
+      "url": "https://github.com/changlabs/MicroBiotR/compare/main...codex/package-development",
+      "status": 200,
+      "final": "https://github.com/changlabs/MicroBiotR/compare/main...codex/package-development",
+      "files": [
+        "docs/colleague-review.md"
+      ]
+    },
+    {
+      "url": "https://github.com/changlabs/MicroBiotR/commit/f75ea5f",
+      "status": 200,
+      "final": "https://github.com/changlabs/MicroBiotR/commit/f75ea5f",
+      "files": [
+        "docs/colleague-review.md"
+      ]
+    },
+    {
+      "url": "https://remotes.r-lib.org/reference/install_github.html",
+      "status": 200,
+      "final": "https://remotes.r-lib.org/reference/install_github.html",
+      "files": [
+        "docs/colleague-review.md"
+      ]
+    },
+    {
+      "url": "https://github.com/changlabs/MicroBiotR/blob/codex/package-development/README.md",
+      "status": 200,
+      "final": "https://github.com/changlabs/MicroBiotR/blob/codex/package-development/README.md",
+      "files": [
+        "docs/colleague-review.md"
+      ]
+    },
+    {
+      "url": "https://cran.r-project.org/web/packages/kohonen/kohonen.pdf",
+      "status": 200,
+      "final": "https://cran.r-project.org/web/packages/kohonen/kohonen.pdf",
+      "files": [
+        "docs/statistical-methods.md"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/kruskal.test.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/kruskal.test.html",
+      "files": [
+        "docs/statistical-methods.md"
+      ]
+    },
+    {
+      "url": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/aov.html",
+      "status": 200,
+      "final": "https://stat.ethz.ch/R-manual/R-devel/library/stats/html/aov.html",
+      "files": [
+        "docs/statistical-methods.md"
+      ]
+    },
+    {
+      "url": "https://topepo.github.io/caret/model-training-and-tuning.html",
+      "status": 200,
+      "final": "https://topepo.github.io/caret/model-training-and-tuning.html",
+      "files": [
+        "docs/statistical-methods.md"
+      ]
+    },
+    {
+      "url": "https://zenodo.org/records/20286378",
+      "status": 200,
+      "final": "https://zenodo.org/records/20286378",
+      "files": [
+        "docs/tutorial-local-test-report.md"
+      ]
+    },
+    {
+      "url": "https://ggplot2.tidyverse.org/reference/lims.html",
+      "status": 200,
+      "final": "https://ggplot2.tidyverse.org/reference/lims.html",
+      "files": [
+        "docs/tutorial-local-test-report.md"
+      ]
+    },
+    {
+      "url": "https://bioconductor.org/packages/release/bioc/manuals/flowCore/man/flowCore.pdf",
+      "status": 200,
+      "final": "https://bioconductor.org/packages/release/bioc/manuals/flowCore/man/flowCore.pdf",
+      "files": [
+        "docs/tutorial-local-test-report.md"
+      ]
+    },
+    {
+      "url": "https://github.com/changlabs/MicroBiotR/commit/2cc4477",
+      "status": 200,
+      "final": "https://github.com/changlabs/MicroBiotR/commit/2cc4477",
+      "files": [
+        "docs/cluster-label-case-fix-report.md"
+      ]
+    }
+  ]
+}

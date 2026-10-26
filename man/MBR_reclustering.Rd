@@ -2,7 +2,7 @@
 % Please edit documentation in R/Micro.R
 \name{MBR_reclustering}
 \alias{MBR_reclustering}
-\title{Hierarchical Reclustering}
+\title{Recluster numeric features using Ward linkage}
 \usage{
 MBR_reclustering(data, num_clusters)
 }
@@ -11,8 +11,25 @@ MBR_reclustering(data, num_clusters)
 
 \item{num_clusters}{Integer specifying the number of clusters to cut the dendrogram into.}
 }
+\value{
+The input data frame with an added or replaced Cluster column, returned invisibly and assigned to reclustered_information.
+}
 \description{
-Performs hierarchical clustering using scaled Euclidean distance
-and Ward's D2 linkage. The function assigns new cluster labels and returns the input data with an added
-`Cluster` column.
+Standardizes numeric columns, performs Euclidean hierarchical clustering, and appends cluster membership to a copy of the input.
+}
+\details{
+Non-numeric columns are preserved but excluded from distance calculations. All numeric columns, including numeric identifiers or previous labels, enter clustering; remove unwanted numeric fields from a copy beforehand. scale centers each feature and divides by its sample standard deviation, giving differently measured channels comparable weight. Constant columns, missing or infinite values cause invalid distances.
+
+Ward.D2 linkage merges groups using a criterion related to the increase in within-cluster sum of squares; with Euclidean distances it favors compact clusters. cutree chooses the requested number of groups, which must be between 1 and the number of rows. Labels are arbitrary identifiers, not ordered biological states. This descriptive partition has no p-value or estimate of the optimal number of clusters. A pre-existing Cluster column is overwritten in the returned copy. Assigns reclustered_information globally.
+}
+\examples{
+x <- data.frame(channel1 = c(1, 2, 8, 9), channel2 = c(2, 1, 9, 8),
+                label = letters[1:4])
+y <- MBR_reclustering(x, num_clusters = 2)
+stopifnot(nrow(y) == nrow(x), length(unique(y$Cluster)) == 2,
+          identical(y$label, x$label))
+
+}
+\references{
+\url{https://stat.ethz.ch/R-manual/R-devel/library/stats/html/hclust.html}
 }
