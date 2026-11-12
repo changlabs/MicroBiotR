@@ -232,7 +232,7 @@ selected_features <- MBR_fs(
 # Generate a heatmap for selected features
 MBR_heatmap(
   # selected feature matrix for visualization
-  data = MBR_selected_features,
+  data = selected_features,
   # SOM phenotype information
   cohonen_information = cohonen_information,
   # outputs to the current working directory
@@ -285,7 +285,7 @@ MBR_mantel(
 ``` r
 MBR_ml(
   # feature table
-  data = MBR_selected_features,
+  data = selected_features,
   # metadata
   meta_data = meta,
   # column name in metadata containing group labels
@@ -434,7 +434,7 @@ MBR_save(
   # list of input FCS files
   fcs_files = fcs_files,
   # acquisition-scale events from the same source sample
-  dat = export_dat,
+  dat = dat,
   # selected clusters to export
   selected_rows = c("V9", "V10"),
   # Choose this position in the input FCS sample list.
