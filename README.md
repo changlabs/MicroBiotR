@@ -571,4 +571,4 @@ MBR_ml(
 )
 ```
 
-![ROC diagnostic based on RNA expression features](figure/RNA.png)
+![ROC curve on RNA expression data](figure/RNA.png)
