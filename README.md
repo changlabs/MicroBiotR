@@ -84,7 +84,16 @@ meta<-read.delim('meta.txt',header = T, row.names = 1)
 load(file.path("data_gated.save"))
 # Set the random seed for reproducible sampling or fitting.
 set.seed(2025)
-MBR_som(fl_data_ig)
+som_result <- MBR_som(fl_data_ig)
+
+# Extract phenotypic information
+cohonen_information <- som_result$cohonen_information
+
+# Extract row count table
+raw_count_table <- som_result$raw_count_table
+
+# Extract relative abundance of count table
+count_table <- som_result$count_table
 ```
 
 ## 2. Statistics
