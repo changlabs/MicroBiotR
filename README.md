@@ -102,11 +102,20 @@ count_table <- som_result$count_table
 ``` r
 # Test options are 'wilcox', 'kruskal', 'anova', 't.test' or 'ttest'.
 # correction could be one of 'none', 'fdr', 'bonferroni' ,'BH'
-MBR_stat(data = count_table, group_col = 'Group', meta_data = meta,
-       # Use the two-sided Wilcoxon group test.
-       test_type = 'wilcox', out_path = './',
-       # Set whether feature-wise p-values are adjusted for multiple tests.
-       correction = 'fdr', cutoff = 0.001)
+stat_result <- MBR_stat(
+  data = count_table,
+  meta_data = meta,
+  group_col = "Group",
+  test_type = "wilcox",
+  cutoff = 0.001,
+  correction = "fdr"
+)
+
+# Extract p-values
+pvalue_data <- stat_result$pvalue
+
+# Extract significant features
+significant_data <- stat_result$significant
 ```
 
 ## 3. Circular heatmap
@@ -185,7 +194,8 @@ MBR_beta(
 ``` r
 # Perform recursive feature elimination (RFE) for feature selection
 # Random seeds are internally fixed for reproducibility.
-MBR_fs(
+# Run MBR_fs and store the selected features
+selected_features <- MBR_fs(
   # dataframe containing features
   significant_data,
   # outputs to the current working directory
@@ -245,7 +255,7 @@ MBR_heatmap(
 # Perform Mantel correlation analysis between selected features and metadata variables
 MBR_mantel(
   # selected feature matrix
-  data = MBR_selected_features[,1:10],
+  data = selected_features[,1:10],
   # matched sample metadata data frame
   meta_data = meta,
   # clinical variable columns
