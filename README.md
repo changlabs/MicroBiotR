@@ -457,33 +457,31 @@ meta_16s <- read.delim('bac_meta.txt', header = TRUE, row.names = 1)
 # Read the taxa-by-sample feature table.
 count_table_16s <- read.delim('bac_data.txt', header = TRUE, row.names = 1)
 
-
 # Calculate totals for the sample columns of the imported 16S table.
 col_sums <- colSums(count_table_16s)
 # Retain sample columns with positive totals.
 count_table_filtered <- count_table_16s[, col_sums > 0]
 
-# Transpose the count table so that samples are rows and taxa are columns
+# Transpose the count table.
 # Transpose the feature table to samples in rows.
 count_t <- as.data.frame(t(count_table_filtered))
-
 meta_final <- meta_16s[rownames(count_t), , drop = FALSE]
 
-
-
-# Application of MicroBiotR
-MBR_stat(
+stat_result_16s <- MBR_stat(
   data = count_t,
-  group_col = 'Group',
   meta_data = meta_final,
-  test_type = 'wilcox',
-  out_path = './',
-  correction = 'none',
-  cutoff = 0.1
+  group_col = "Group",
+  test_type = "wilcox",
+  cutoff = 0.1,
+  correction = "none"
 )
 
-MBR_fs(
-  significant_data,
+pvalue_data_16s <- stat_result_16s$pvalue
+
+significant_data_16s <- stat_result_16s$significant
+
+selected_features_16s<- MBR_fs(
+  significant_data_16s,
   out_path = './',
   nfolds_cv = 5,
   rfe_size = 125,
@@ -495,7 +493,7 @@ MBR_fs(
 )
 
 MBR_ml(
-  data = MBR_selected_features,
+  data = selected_features_16s,
   meta_data = meta_final,
   group_name = 'Group',
   out_path = './',
