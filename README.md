@@ -307,7 +307,7 @@ MBR_ml(
 )
 ```
 
-![Flow-cytometry random forest ROC diagnostic](figure/roc.png)
+![ROC curve](figure/roc.png)
 
 ## 10. Confusion matrix
 
@@ -327,8 +327,7 @@ MBR_conf(
 )
 ```
 
-![Confusion matrix for CD and HC](figure/conf.png)
-
+![Confusion matrix for classification](figure/conf.png)
 
 ## 11. Reclustering
 
@@ -423,8 +422,7 @@ plots <- MBR_plot(
 print(plots)
 ```
 
-![Selected populations in four flow-cytometry projections](figure/dot.png)
-
+![Selected populations in dot plot](figure/dot.png)
 
 ## 13. Export selected populations
 
