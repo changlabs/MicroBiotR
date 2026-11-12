@@ -543,10 +543,7 @@ count_t <- as.data.frame(t(count_df))
 
 meta_final <- meta_rna[rownames(count_t), , drop = FALSE]
 
-
-
-# Application of MicroBiotR
-MBR_stat(
+stat_result_RNA <-MBR_stat(
   data = count_t,
   group_col = 'Group',
   meta_data = meta_final,
@@ -556,8 +553,12 @@ MBR_stat(
   cutoff = 0.00001
 )
 
+pvalue_data_RNA <- stat_result_RNA$pvalue
+
+significant_data_RNA <- stat_result_RNA$significant
+
 MBR_ml(
-  data = significant_data,
+  data = significant_data_RNA,
   meta_data = meta_final,
   group_name = 'Group',
   out_path = './',
