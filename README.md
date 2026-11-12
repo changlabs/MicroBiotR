@@ -506,7 +506,7 @@ MBR_ml(
 )
 ```
 
-![ROC diagnostic based on 16S features](figure/16S.png)
+![ROC curve on bacterial feature](figure/16S.png)
 
 
 ## 15. Transcriptomics
