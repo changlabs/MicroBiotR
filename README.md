@@ -570,3 +570,184 @@ MBR_ml(
 ```
 
 ![ROC curve on RNA expression data](figure/RNA.png)
+
+
+
+## 15. Transcriptomics
+
+``` r
+
+# Pre-processing
+# Load metadata and feature abundance table
+# Read the RNA sample metadata.
+meta_rna <- read.delim(
+  'meta_rna.txt',
+  header = TRUE,
+  row.names = 1
+)
+
+count_table_rna <- read_csv(
+  'rnaibd.csv'
+)
+
+# Keep Symbol and numeric sample columns with positive totals.
+# Retain Symbol and numeric columns with positive totals.
+count_table_clean <- count_table_rna %>%
+  select(
+    Symbol,
+    where(~ is.numeric(.) && sum(., na.rm = TRUE) > 0)
+  )
+
+# Convert the `Symbol` column into row names so that genes become rows prior to transposition
+count_df <- count_table_clean %>%
+  column_to_rownames(var = "Symbol")
+
+# Transpose the count table so that samples are rows and genes/features are columns
+count_t <- as.data.frame(t(count_df))
+
+meta_final <- meta_rna[rownames(count_t), , drop = FALSE]
+
+stat_result_RNA <-MBR_stat(
+  data = count_t,
+  group_col = 'Group',
+  meta_data = meta_final,
+  test_type = 'wilcox',
+  out_path = './',
+  correction = 'none',
+  cutoff = 0.00001
+)
+
+pvalue_data_RNA <- stat_result_RNA$pvalue
+
+significant_data_RNA <- stat_result_RNA$significant
+
+MBR_ml(
+  data = significant_data_RNA,
+  meta_data = meta_final,
+  group_name = 'Group',
+  out_path = './',
+  reference_level = 'UC',
+  width = 6,
+  height = 6,
+  method = 'repeatedcv',
+  number = 5,
+  repeats = 2
+)
+```
+
+![ROC curve on RNA expression data](figure/RNA.png)
+
+
+## 15. Hold-out validation (ML)
+
+``` r
+# Stratified 80:20 train-test split
+set.seed(2025)
+meta_ml<-read.delim('meta.txt',header = T, row.names = 1)
+train_idx <- caret::createDataPartition(
+  y = meta_ml$Group,
+  p = 0.8,
+  list = FALSE
+)
+
+# Split count tables
+count_table_training <- count_table[train_idx, , drop = FALSE]
+count_table_test <- count_table[-train_idx, , drop = FALSE]
+
+# Split metadata
+meta_training <- meta_ml[train_idx, , drop = FALSE]
+meta_test <- meta_ml[-train_idx, , drop = FALSE]
+
+# Perform statistical analysis on training data
+stat_result_training <- MBR_stat(
+  data = count_table_training,
+  group_col = "Group",
+  meta_data = meta_training,
+  test_type = "wilcox",
+  out_path = "./",
+  correction = "none",
+  cutoff = 0.05
+)
+
+# Extract results
+pvalue_training <- stat_result_training$pvalue
+
+significant_training <- stat_result_training$significant
+
+# Perform feature selection using training data
+selected_features_training <- MBR_fs(
+  data = significant_training,
+  meta_data = meta_training,
+  group_name = "Group",
+  out_path = "ML_results/02_FS",
+  nfolds_cv = 5,
+  top_n_features = 10,
+  rfe_size = 20,
+  width = 5,
+  height = 5
+)
+
+
+# Extract selected feature names
+selected_feature_names <- colnames(selected_features_training)
+
+# Extract the corresponding features from test data
+selected_features_test <- count_table_test[
+  ,
+  selected_feature_names,
+  drop = FALSE
+]
+
+# Match metadata to the selected test samples
+meta_test_ml <- meta_test[
+  rownames(selected_features_test),
+  ,
+  drop = FALSE
+]
+
+# Match training metadata to selected training samples
+meta_training_ml <- meta_training[
+  rownames(selected_features_training),
+  ,
+  drop = FALSE
+]
+
+
+# Train the random forest model and evaluate it
+ml_result <- MBR_ml(
+  data = selected_features_training,
+  meta_data = meta_training_ml,
+  group_name = "Group",
+  out_path = "./",
+  reference_level = "CD",
+  width = 6,
+  height = 6,
+  method = "repeatedcv",
+  number = 5,
+  repeats = 2,
+  test_data = selected_features_test,
+  test_meta_data = meta_test_ml
+)
+
+
+set.seed(2025)
+conf_result <- MBR_conf(
+  data = selected_features_training,
+  meta_data = meta_training_ml,
+  group_name = "Group",
+  out_path = "./",
+  reference_level = "CD",
+  width = 6,
+  height = 6,
+  method = "repeatedcv",
+  number = 5,
+  repeats = 2,
+  test_data = selected_features_test,
+  test_meta_data = meta_test_ml
+)
+```
+
+![ROC curve on held-out data](figure/inde_roc.png)
+![Confusion matrix on held-out data](figure/inde_conf.png)
+
+
